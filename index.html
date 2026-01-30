@@ -1,2317 +1,1625 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Eliminator</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Eliminator</title>
+  <style>
+    :root{
+      --bg:#0f1115;
+      --fg:#e9edf5;
+      --muted:#a8b0bd;
+      --line:#2a2f3a;
+      --panel:#141823;
+      --panel2:#101421;
+      --chip:#0b0d12;
+      --btn:#0b0d12;
+      --btn2:#121725;
+      --shadow: 0 16px 40px rgba(0,0,0,0.45);
 
-    <style>
-      :root{
-        --bg:#0f1115;
-        --fg:#e9edf5;
-        --muted:#a8b0bd;
-        --line:#2a2f3a;
-        --panel:#141823;
-        --panel2:#101421;
-        --chip:#0b0d12;
-        --btn:#0b0d12;
-        --btn2:#121725;
-        --shadow: 0 16px 40px rgba(0,0,0,0.45);
-        --ring: 128px;
-        --ringStroke: 14px;
-        --accent1:#f2f2f2;
-        --accent2:#aeb7c7;
-        --good:#b7f7d6;
-        --warn:#ffe6a6;
-        --danger:#ffb3b3;
-      }
+      --accent1:#f2f2f2;
+      --accent2:#aeb7c7;
 
-      *{ box-sizing:border-box; }
-      html, body{ height:100%; }
-      body{
-        margin:0;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        background:var(--bg);
-        color:var(--fg);
-        overflow-x:hidden;
-      }
+      --danger:#ffb3b3;
+      --ok:#b7f7d6;
 
-      .app{
-        min-height:100%;
-        display:grid;
-        grid-template-rows:auto 1fr auto;
-        gap:10px;
-        padding:12px;
-        max-width: 980px;
-        margin: 0 auto;
-      }
-      @media (min-width: 900px){ .app{ padding:16px; } }
+      --radius:16px;
+    }
 
-      canvas#fx{
-        position:fixed;
-        inset:0;
-        pointer-events:none;
-        z-index:1;
-      }
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--fg);
+      overflow-x:hidden;
+    }
 
-      .top{
-        position:relative;
-        z-index:2;
-        display:flex;
-        align-items:flex-start;
-        justify-content:space-between;
-        gap:12px;
-      }
+    .app{
+      min-height:100%;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 12px;
+      display:grid;
+      grid-template-rows: auto auto 1fr;
+      gap:10px;
+    }
 
-      .brand{
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-        min-width: 0;
-      }
-      .brand h1{
-        margin:0;
-        font-size:18px;
-        font-weight:800;
-        letter-spacing:0.2px;
-        line-height:1.1;
-      }
-      .brand .sub{
-        font-size:12px;
-        color:var(--muted);
-        letter-spacing:0.06em;
-      }
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .brand h1{
+      margin:0;
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:0.2px;
+      line-height:1.1;
+    }
+    .brand .sub{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:0.06em;
+    }
 
-      .topRight{ display:flex; gap:10px; align-items:center; }
+    .topRight{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
-      .pillBtn{
-        border:1px solid var(--line);
-        background:var(--btn);
-        color:var(--fg);
-        border-radius:14px;
-        padding:10px 12px;
-        cursor:pointer;
-        display:flex;
-        align-items:center;
-        gap:8px;
-        box-shadow: none;
-      }
-      .pillBtn:hover{ border-color:#3b4456; }
-      .pillBtn:active{ transform: translateY(1px); }
+    .btn{
+      border:1px solid var(--line);
+      background:var(--btn);
+      color:var(--fg);
+      border-radius:14px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:0.02em;
+    }
+    .btn:hover{ border-color:#3b4456; }
+    .btn:active{ transform: translateY(1px); }
+    .btn:disabled{ opacity:0.5; cursor:not-allowed; }
 
-      .main{
-        position:relative;
-        z-index:2;
-        display:grid;
-        gap:10px;
-      }
+    .btn.small{ padding:8px 10px; border-radius:12px; font-weight:850; font-size:12px; }
+    .btn.danger{ border-color: rgba(255,179,179,0.35); }
+    .btn.ok{ border-color: rgba(183,247,214,0.25); }
 
-      .card{
-        background:linear-gradient(180deg,var(--panel),var(--panel2));
-        border:1px solid var(--line);
-        border-radius:16px;
-        padding:14px;
-        box-shadow: none;
-      }
+    .miniMap{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:8px;
+    }
 
-      .current{
-        display:grid;
-        gap:12px;
-        border-radius:18px;
-        border:1px solid rgba(242,242,242,0.12);
-        background:
-          radial-gradient(1200px 520px at 20% 20%, rgba(242,242,242,0.10), transparent 60%),
-          linear-gradient(180deg, var(--panel), var(--panel2));
-      }
+    .tab{
+      border:1px solid var(--line);
+      background:var(--btn);
+      color:var(--fg);
+      border-radius:14px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:900;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      font-size:12px;
+    }
+    .tab.active{
+      border-color: rgba(242,242,242,0.28);
+      background: linear-gradient(90deg, rgba(242,242,242,0.10), rgba(174,183,199,0.10)), var(--btn);
+    }
 
-      .currentTop{
-        display:flex;
-        justify-content:space-between;
-        align-items:flex-start;
-        gap:12px;
-      }
+    .card{
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
 
-      .taskTitle{
-        min-width:0;
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-      }
-      .taskName{
-        font-size:18px;
-        font-weight:850;
-        line-height:1.15;
-        letter-spacing:0.2px;
-        word-break: break-word;
-      }
-      .taskMeta{
-        display:flex;
-        flex-wrap:wrap;
-        gap:8px;
-        color:var(--muted);
-        font-size:12px;
-      }
-      .chip{
-        border:1px solid var(--line);
-        background:var(--chip);
-        border-radius:999px;
-        padding:6px 10px;
-        line-height:1;
-        white-space:nowrap;
-      }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width: 860px){
+      .grid2{ grid-template-columns: 1fr 1fr; }
+    }
 
-      .progressRow{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:14px;
-        flex-wrap:wrap;
-      }
+    textarea{
+      width:100%;
+      min-height: 110px;
+      resize: vertical;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: var(--chip);
+      color: var(--fg);
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.35;
+      outline: none;
+    }
+    textarea:focus{ border-color: rgba(242,242,242,0.22); }
 
-      .ringWrap{
-        display:flex;
-        align-items:center;
-        gap:12px;
-      }
+    .row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
 
-      .ring{
-        width: var(--ring);
-        height: var(--ring);
-        border-radius: 999px;
-        background:
-          conic-gradient(from -90deg, var(--accent1) 0deg, var(--accent2) var(--p), rgba(255,255,255,0.06) var(--p), rgba(255,255,255,0.06) 360deg);
-        position:relative;
-        box-shadow: var(--shadow);
-      }
-      .ring::before{
-        content:"";
-        position:absolute;
-        inset: var(--ringStroke);
-        border-radius:999px;
-        background: linear-gradient(180deg, var(--panel), var(--panel2));
-        border:1px solid rgba(255,255,255,0.08);
-      }
-      .ringCenter{
-        position:absolute;
-        inset:0;
-        display:grid;
-        place-items:center;
-        text-align:center;
-        pointer-events:none;
-      }
-      .ringCenter .pct{
-        font-size:26px;
-        font-weight:900;
-        letter-spacing:0.4px;
-      }
-      .ringCenter .lbl{
-        margin-top:4px;
-        font-size:11px;
-        color:var(--muted);
-        letter-spacing:0.08em;
-      }
+    .quiet{
+      color: var(--muted);
+      font-size: 12px;
+    }
 
-      .stats{
-        display:grid;
-        gap:8px;
-        min-width: 200px;
-        flex:1;
-      }
+    .list{
+      display:grid;
+      gap:8px;
+      margin-top: 10px;
+    }
 
-      .statLine{
-        display:flex;
-        justify-content:space-between;
-        gap:12px;
-        padding:10px 12px;
-        border:1px solid var(--line);
-        border-radius:14px;
-        background:var(--chip);
-        align-items:center;
-      }
-      .statLine span{ color:var(--muted); font-size:12px; }
-      .statLine b{ font-size:14px; font-weight:850; }
+    .task{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: var(--chip);
+      padding: 10px;
+      display:grid;
+      gap:8px;
+    }
 
-      .controls{
-        display:grid;
-        grid-template-columns: 1fr 1fr;
-        gap:10px;
-      }
-      @media (min-width: 520px){
-        .controls{ grid-template-columns: 1.4fr 1fr 1fr; }
-      }
+    .taskTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .taskText{
+      font-weight: 900;
+      word-break: break-word;
+      line-height: 1.2;
+    }
+    .pillRow{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.12);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1;
+      white-space: nowrap;
+    }
 
-      .bigBtn{
-        border:1px solid rgba(242,242,242,0.18);
-        background:
-          radial-gradient(800px 240px at 30% 20%, rgba(242,242,242,0.14), transparent 55%),
-          linear-gradient(180deg, #0b0d12, #0a0c10);
-        color:var(--fg);
-        border-radius:18px;
-        padding:16px 14px;
-        cursor:pointer;
-        font-weight:900;
-        letter-spacing:0.08em;
-        text-transform:uppercase;
-        box-shadow: var(--shadow);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        min-height:58px;
-      }
-      .bigBtn:hover{ border-color:rgba(242,242,242,0.30); }
-      .bigBtn:active{ transform: translateY(1px); }
-      .bigBtn:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
-      .bigBtn.primary{
-        background:
-          radial-gradient(900px 260px at 30% 20%, rgba(242,242,242,0.22), transparent 60%),
-          linear-gradient(90deg, rgba(242,242,242,0.12), rgba(174,183,199,0.12)),
-          linear-gradient(180deg, #0b0d12, #0a0c10);
-      }
+    select, input[type="number"], input[type="text"]{
+      border:1px solid var(--line);
+      background: #0b0d12;
+      color: var(--fg);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 800;
+      font-size: 12px;
+      outline:none;
+    }
+    select:focus, input:focus{ border-color: rgba(242,242,242,0.22); }
 
-      .smallBtnRow{ display:flex; gap:10px; flex-wrap:wrap; }
-      .btn{
-        border:1px solid var(--line);
-        background:var(--btn);
-        color:var(--fg);
-        border-radius:14px;
-        padding:10px 12px;
-        cursor:pointer;
-      }
-      .btn:hover{ border-color:#3b4456; }
-      .btn:active{ transform: translateY(1px); }
-      .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+    .editRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+    }
+    @media (min-width: 520px){
+      .editRow{ grid-template-columns: 1fr 1fr 1fr 1fr; }
+    }
 
-      .listHeader{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-      }
-      .listHeader h2{
-        margin:0;
-        font-size:12px;
-        color:var(--muted);
-        text-transform:uppercase;
-        letter-spacing:0.14em;
-        font-weight:850;
-      }
-      .list{ display:grid; gap:8px; margin-top:10px; }
+    .dragHint{
+      color: var(--muted);
+      font-size: 11px;
+    }
 
-      details{
-        border:1px solid var(--line);
-        border-radius:14px;
-        background:var(--chip);
-        padding:10px;
-      }
-      summary{
-        cursor:pointer;
-        color:var(--muted);
-        font-weight:850;
-        list-style:none;
-      }
-      summary::-webkit-details-marker{ display:none; }
+    /* Focus mode */
+    body.focus .app{
+      max-width: 740px;
+    }
+    body.focus header,
+    body.focus .miniMap,
+    body.focus .triageView,
+    body.focus .captureView{
+      display:none !important;
+    }
+    .focusView{ display:none; }
+    body.focus .focusView{ display:block; }
 
-      .task{
-        border:1px solid var(--line);
-        border-radius:14px;
-        background:#0b0d12;
-        padding:10px;
-        display:grid;
-        gap:8px;
-      }
-      .taskTop{
-        display:flex;
-        justify-content:space-between;
-        gap:10px;
-        align-items:flex-start;
-      }
-      .taskTop .nm{ font-weight:850; word-break: break-word; }
-      .strike{ text-decoration:line-through; opacity:0.55; }
-      .metaRow{
-        display:flex;
-        flex-wrap:wrap;
-        gap:8px;
-        color:var(--muted);
-        font-size:12px;
-      }
+    .focusWrap{
+      min-height: calc(100vh - 24px);
+      display:grid;
+      gap:12px;
+      align-content:center;
+    }
 
-      .noteArea{
-        width:100%;
-        min-height:64px;
-        border-radius:12px;
-        border:1px solid var(--line);
-        background:#0f1115;
-        color:var(--fg);
-        padding:10px;
-        font-size:12px;
-        line-height:1.3;
-        resize:vertical;
-      }
+    .focusCard{
+      border:1px solid rgba(242,242,242,0.12);
+      background:
+        radial-gradient(900px 260px at 30% 20%, rgba(242,242,242,0.14), transparent 60%),
+        linear-gradient(180deg, var(--panel), var(--panel2));
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      display:grid;
+      gap:12px;
+    }
 
-      .attachRow{
-        display:flex;
-        gap:10px;
-        flex-wrap:wrap;
-        align-items:center;
-      }
-      .thumbs{ display:flex; gap:8px; flex-wrap:wrap; }
-      .thumb{
-        width:56px;
-        height:56px;
-        border:1px solid var(--line);
-        border-radius:12px;
-        overflow:hidden;
-        background:#0f1115;
-      }
-      .thumb img{ width:100%; height:100%; object-fit:cover; display:block; cursor:pointer; }
+    .focusTask{
+      font-size: 22px;
+      font-weight: 950;
+      line-height: 1.15;
+      word-break: break-word;
+    }
 
-      .toast{
-        position:fixed;
-        left:50%;
-        bottom: 18px;
-        transform:translateX(-50%);
-        background:#0b0d12;
-        border:1px solid var(--line);
-        border-radius:14px;
-        padding:10px 12px;
-        color:var(--fg);
-        font-size:13px;
-        opacity:0;
-        pointer-events:none;
-        transition:opacity 150ms ease, transform 150ms ease;
-        max-width: min(900px, calc(100vw - 24px));
-        box-shadow: var(--shadow);
-        white-space:pre-wrap;
-        z-index: 50;
-      }
-      .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+    .focusStats{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .stat{
+      border:1px solid var(--line);
+      background: var(--chip);
+      border-radius: 16px;
+      padding: 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .stat span{ color:var(--muted); font-size:12px; font-weight:800; }
+    .stat b{ font-size:16px; font-weight:950; }
 
-      /* ====== Mini bars (history) ====== */
-      .hRow{
-        border:1px solid var(--line);
-        background:var(--chip);
-        border-radius:14px;
-        padding:10px 12px;
-        display:grid;
-        gap:8px;
-      }
-      .hTop{
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        gap:10px;
-      }
-      .hDate{
-        font-weight:850;
-        font-size:13px;
-      }
-      .hSmall{
-        color:var(--muted);
-        font-size:12px;
-      }
-      .bar{
-        height:10px;
-        border-radius:999px;
-        background: rgba(255,255,255,0.08);
-        overflow:hidden;
-        border:1px solid rgba(255,255,255,0.08);
-      }
-      .bar > div{
-        height:100%;
-        width:0%;
-        background: linear-gradient(90deg, rgba(242,242,242,0.45), rgba(174,183,199,0.45));
-      }
-      .mono{
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      }
+    .ring{
+      width: 140px;
+      height: 140px;
+      border-radius: 999px;
+      background:
+        conic-gradient(from -90deg, var(--accent1) 0deg, var(--accent2) var(--p), rgba(255,255,255,0.06) var(--p), rgba(255,255,255,0.06) 360deg);
+      position:relative;
+      box-shadow: var(--shadow);
+      margin-left:auto;
+      margin-right:auto;
+    }
+    .ring::before{
+      content:"";
+      position:absolute;
+      inset: 14px;
+      border-radius:999px;
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+      border:1px solid rgba(255,255,255,0.08);
+    }
+    .ringCenter{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      pointer-events:none;
+    }
+    .ringCenter .pct{ font-size: 26px; font-weight: 950; }
+    .ringCenter .lbl{ font-size: 11px; color: var(--muted); letter-spacing:0.08em; }
 
-      /* ====== Drawer ====== */
-      .drawer{
-        position:fixed;
-        left:0;
-        right:0;
-        bottom:0;
-        z-index:40;
-        padding: 0 12px calc(12px + env(safe-area-inset-bottom));
-        pointer-events:none;
-      }
-      @media (min-width: 900px){
-        .drawer{
-          left:auto;
-          width: 420px;
-          right: 12px;
-          padding: 0 0 12px 0;
-        }
-      }
+    .focusBtns{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width: 520px){
+      .focusBtns{ grid-template-columns: 1fr 1fr; }
+    }
 
-      .drawerSheet{
-        pointer-events:auto;
-        border:1px solid rgba(242,242,242,0.12);
-        background:linear-gradient(180deg,var(--panel),var(--panel2));
-        border-radius:18px;
-        box-shadow: var(--shadow);
-        overflow:hidden;
-        transform: translateY(var(--drawerY, 62%));
-        transition: transform 140ms ease;
-        will-change: transform;
-      }
-      .drawer.dragging .drawerSheet{ transition:none; }
+    .bigBtn{
+      border:1px solid rgba(242,242,242,0.16);
+      background:
+        radial-gradient(800px 240px at 30% 20%, rgba(242,242,242,0.12), transparent 60%),
+        linear-gradient(180deg, #0b0d12, #0a0c10);
+      color:var(--fg);
+      border-radius: 18px;
+      padding: 16px 14px;
+      cursor:pointer;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: var(--shadow);
+      min-height: 58px;
+    }
+    .bigBtn:hover{ border-color: rgba(242,242,242,0.28); }
+    .bigBtn:active{ transform: translateY(1px); }
+    .bigBtn:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 
-      .drawerHandle{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-        padding:10px 12px;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
-        background: rgba(0,0,0,0.10);
-        cursor: grab;
-        user-select:none;
-        touch-action:none;
-      }
-      .grabber{
-        width:44px;
-        height:5px;
-        border-radius:999px;
-        background: rgba(233,237,245,0.22);
-        margin-right: 10px;
-        flex: 0 0 auto;
-      }
-      .drawerTitle{
-        display:flex;
-        align-items:center;
-        gap:10px;
-        min-width:0;
-      }
-      .drawerTitle b{
-        font-size:12px;
-        letter-spacing:0.14em;
-        text-transform:uppercase;
-        color:var(--muted);
-      }
+    .bigBtn.primary{
+      background:
+        radial-gradient(900px 260px at 30% 20%, rgba(242,242,242,0.22), transparent 60%),
+        linear-gradient(90deg, rgba(242,242,242,0.10), rgba(174,183,199,0.10)),
+        linear-gradient(180deg, #0b0d12, #0a0c10);
+    }
 
-      .drawerTools{
-        display:flex;
-        gap:8px;
-        align-items:center;
-      }
+    /* Panel */
+    .panel{
+      display:none;
+    }
+    body.panelOpen .panel{
+      display:block;
+    }
+    .panel .row{
+      justify-content:flex-start;
+    }
+    .panelGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width: 860px){
+      .panelGrid{ grid-template-columns: 1fr 1fr; }
+    }
 
-      .iconBtn{
-        border:1px solid var(--line);
-        background:var(--btn);
-        color:var(--fg);
-        border-radius:12px;
-        padding:8px 10px;
-        cursor:pointer;
-      }
-      .iconBtn:hover{ border-color:#3b4456; }
-      .iconBtn:active{ transform: translateY(1px); }
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: 18px;
+      transform:translateX(-50%);
+      background:#0b0d12;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      color:var(--fg);
+      font-size:13px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 140ms ease, transform 140ms ease;
+      max-width: min(900px, calc(100vw - 24px));
+      box-shadow: var(--shadow);
+      white-space:pre-wrap;
+      z-index: 50;
+    }
+    .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
 
-      .tabs{
-        display:flex;
-        gap:8px;
-        padding:10px 12px;
-        flex-wrap:wrap;
-      }
-      .tab{
-        border:1px solid var(--line);
-        background:var(--btn);
-        color:var(--fg);
-        border-radius:999px;
-        padding:8px 10px;
-        cursor:pointer;
-        font-size:12px;
-        font-weight:850;
-      }
-      .tab.active{
-        border-color: rgba(242,242,242,0.26);
-        background: linear-gradient(90deg, rgba(242,242,242,0.10), rgba(174,183,199,0.10)), var(--btn);
-      }
+    .done{
+      text-decoration: line-through;
+      opacity: 0.55;
+    }
 
-      .pages{
-        display:flex;
-        overflow:auto;
-        scroll-snap-type:x mandatory;
-        -webkit-overflow-scrolling: touch;
-      }
-      .page{
-        flex: 0 0 100%;
-        padding: 0 12px 12px 12px;
-        scroll-snap-align:start;
-      }
+    /* Drag styles */
+    .task[draggable="true"]{ cursor:grab; }
+    .task.dragging{ opacity: 0.6; }
+    .dropZone{
+      outline: 2px dashed rgba(242,242,242,0.18);
+      outline-offset: 6px;
+      border-radius: 14px;
+    }
+  </style>
+</head>
 
-      .field{ display:grid; gap:8px; }
-      .field textarea{
-        width:100%;
-        min-height:180px;
-        border-radius:14px;
-        border:1px solid var(--line);
-        background:#0b0d12;
-        color:var(--fg);
-        padding:12px;
-        font-size:13px;
-        line-height:1.35;
-        resize:vertical;
-      }
-      .field select{
-        width:100%;
-        border-radius:14px;
-        border:1px solid var(--line);
-        background:#0b0d12;
-        color:var(--fg);
-        padding:10px 12px;
-        font-size:13px;
-      }
+<body class="panelOpen">
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1>Eliminator</h1>
+        <div class="sub">des gommes d'ethorion</div>
+      </div>
 
-      .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-      .row1{ display:grid; gap:10px; }
+      <div class="topRight">
+        <button class="btn small" id="btnPresetPrev" title="Preset précédent">◀</button>
+        <button class="btn small" id="btnPreset" title="Preset (Alt+←/→)">Base</button>
+        <button class="btn small" id="btnPresetNext" title="Preset suivant">▶</button>
 
-      .danger{ border-color: rgba(255,179,179,0.35) !important; }
-    </style>
-  </head>
+        <button class="btn small" id="btnPanel">Panneau</button>
+        <button class="btn small ok" id="btnUndo" title="Ctrl/⌘+Z">Undo</button>
+        <button class="btn small ok" id="btnRedo" title="Ctrl/⌘+Shift+Z">Redo</button>
+      </div>
+    </header>
 
-  <body>
-    <canvas id="fx" aria-hidden="true"></canvas>
-
-    <div class="app">
-      <header class="top">
-        <div class="brand">
-          <h1>Eliminator</h1>
-          <div class="sub">des gommes d'ethorion</div>
-        </div>
-
-        <div class="topRight">
-          <button id="btnDrawer" class="pillBtn" type="button" aria-expanded="false">
-            Panneau
-          </button>
-        </div>
-      </header>
-
-      <main class="main">
-        <!-- NEW: Résumé quotidien en haut -->
-        <section class="card" aria-label="Résumé quotidien">
-          <div class="listHeader">
-            <h2>Rapport du jour</h2>
-          </div>
-          <div class="metaRow" id="dailyChips" style="margin-top:10px;"></div>
-          <div style="margin-top:10px; display:grid; gap:10px;">
-            <textarea id="dailyReport" class="noteArea mono" readonly></textarea>
-            <div class="smallBtnRow">
-              <button id="btnCopyDaily" class="btn" type="button">Copier le rapport</button>
-              <button id="btnExportHistory" class="btn" type="button">Exporter historique</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="card current" aria-label="Tâche en cours">
-          <div class="currentTop">
-            <div class="taskTitle">
-              <div id="curName" class="taskName">Aucune</div>
-              <div id="curMeta" class="taskMeta"></div>
-            </div>
-            <div class="chip" id="curKey">—</div>
-          </div>
-
-          <div class="progressRow">
-            <div class="ringWrap">
-              <div id="ring" class="ring" style="--p: 0deg" aria-hidden="true"></div>
-              <div class="ringCenter" aria-hidden="true">
-                <div class="pct" id="pctDone">0%</div>
-                <div class="lbl">progression</div>
-              </div>
-            </div>
-
-            <div class="stats" aria-label="Statistiques">
-              <div class="statLine">
-                <span>Torions restants</span>
-                <b id="torionsLeft">0</b>
-              </div>
-              <div class="statLine">
-                <span>Temps restant</span>
-                <b id="timeLeft">0 min</b>
-              </div>
-            </div>
-          </div>
-
-          <div class="controls" aria-label="Contrôles">
-            <button id="btnRoulette" class="bigBtn primary" type="button">Roulette</button>
-            <button id="btnSkip" class="bigBtn" type="button" disabled>Passer</button>
-            <button id="btnDego" class="bigBtn" type="button" disabled>Dégommer</button>
-          </div>
-
-          <div class="smallBtnRow" aria-label="Actions rapides">
-            <button id="btnElimNow" class="btn" type="button" disabled>Éliminer tout</button>
-            <button id="btnReset" class="btn danger" type="button">Réinitialiser</button>
-          </div>
-        </section>
-
-        <section class="card" aria-label="Charge">
-          <div class="listHeader">
-            <h2>Eliminatorions</h2>
-          </div>
-          <div id="taskContainer" class="list"></div>
-        </section>
-      </main>
-
-      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div class="miniMap" role="tablist" aria-label="Navigation">
+      <button class="tab active" id="tabCapture" role="tab" aria-selected="true">Inbox</button>
+      <button class="tab" id="tabTriage" role="tab" aria-selected="false">Tri</button>
+      <button class="tab" id="tabFocus" role="tab" aria-selected="false">Focus</button>
     </div>
 
-    <!-- ===================== DRAGGABLE DRAWER ===================== -->
-    <div id="drawer" class="drawer" aria-label="Panneau">
-      <div id="drawerSheet" class="drawerSheet">
-        <div id="drawerHandle" class="drawerHandle">
-          <div class="drawerTitle">
-            <div class="grabber" aria-hidden="true"></div>
-            <b>Panneau</b>
-          </div>
-          <div class="drawerTools">
-            <button id="btnHideDrawer" class="iconBtn" type="button" title="Masquer">Masquer</button>
+    <!-- Panneau -->
+    <section class="card panel" aria-label="Panneau">
+      <div class="panelGrid">
+        <div class="card" style="padding:12px;">
+          <div class="row">
+            <div class="quiet">Torion =</div>
+            <select id="selTorionMinutes" aria-label="Durée torion">
+              <option value="5">5 minutes</option>
+              <option value="10">10 minutes</option>
+            </select>
+
+            <div class="quiet">Énergie</div>
+            <select id="selEnergyFilter" aria-label="Filtre énergie">
+              <option value="tous">Tous</option>
+              <option value="faible">Faible</option>
+              <option value="moyen">Moyen</option>
+              <option value="haut">Haut</option>
+            </select>
+
+            <div class="quiet">Tunnel</div>
+            <select id="selTunnel" aria-label="Mode Tunnel">
+              <option value="off">Off</option>
+              <option value="on">On</option>
+            </select>
           </div>
         </div>
 
-        <div class="tabs" role="tablist" aria-label="Onglets">
-          <button class="tab active" type="button" data-tab="0" role="tab" aria-selected="true">Importer</button>
-          <button class="tab" type="button" data-tab="1" role="tab" aria-selected="false">Paramètres</button>
-          <button class="tab" type="button" data-tab="2" role="tab" aria-selected="false">Classement</button>
-          <button class="tab" type="button" data-tab="3" role="tab" aria-selected="false">Historique</button>
+        <div class="card" style="padding:12px;">
+          <div class="row">
+            <button class="btn small" id="btnExport">Export</button>
+            <button class="btn small" id="btnImport">Import</button>
+            <button class="btn small danger" id="btnResetAll">Reset</button>
+          </div>
         </div>
 
-        <div id="pages" class="pages" aria-label="Pages">
-          <!-- Page 0: Import -->
-          <div class="page" role="tabpanel">
-            <div class="field">
-              <textarea id="importText" placeholder="Colle ici : liste brute, Notion/Markdown, checkboxes, temps (min/h), torions, etc."></textarea>
-              <div class="row2">
-                <button id="btnImport" class="btn" type="button">Importer</button>
-                <button id="btnDemo" class="btn" type="button">Exemple</button>
-              </div>
-            </div>
+        <div class="card" style="padding:12px;">
+          <div class="row">
+            <button class="btn small" id="btnPresetAdd">+ Preset</button>
+            <button class="btn small" id="btnPresetEdit">Éditer</button>
+            <button class="btn small danger" id="btnPresetDel">Supprimer</button>
           </div>
-
-          <!-- Page 1: Settings -->
-          <div class="page" role="tabpanel">
-            <div class="row1">
-              <div class="field">
-                <select id="fragMinutes" aria-label="Durée fragment">
-                  <option value="10">Fragment: 10 min</option>
-                  <option value="5">Fragment: 5 min</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <select id="rewardLevel" aria-label="Récompenses">
-                  <option value="0">Récompenses: faible</option>
-                  <option value="1">Récompenses: moyenne</option>
-                  <option value="2">Récompenses: rare</option>
-                  <option value="3">Récompenses: off</option>
-                </select>
-              </div>
-
-              <div class="row2">
-                <button id="btnExport" class="btn" type="button">Exporter</button>
-                <button id="btnImportJson" class="btn" type="button">Importer JSON</button>
-              </div>
-            </div>
+          <div class="quiet" style="margin-top:8px;">
+            Switch: Alt + ← / →
           </div>
+        </div>
 
-          <!-- Page 2: Sorting / grouping -->
-          <div class="page" role="tabpanel">
-            <div class="row1">
-              <div class="field">
-                <select id="groupMode" aria-label="Regrouper">
-                  <option value="cat">Regrouper: type</option>
-                  <option value="torions">Regrouper: torions</option>
-                  <option value="none">Regrouper: aucun</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <select id="sortMode" aria-label="Trier">
-                  <option value="smart">Tri: intelligent</option>
-                  <option value="remain_desc">Tri: torions restants ↓</option>
-                  <option value="remain_asc">Tri: torions restants ↑</option>
-                  <option value="time_desc">Tri: temps restant ↓</option>
-                  <option value="time_asc">Tri: temps restant ↑</option>
-                  <option value="name_asc">Tri: nom A→Z</option>
-                </select>
-              </div>
-
-              <div class="row2">
-                <button id="btnExpandAll" class="btn" type="button">Ouvrir</button>
-                <button id="btnCollapseAll" class="btn" type="button">Fermer</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Page 3: History -->
-          <div class="page" role="tabpanel">
-            <div class="row1">
-              <div class="hRow">
-                <div class="hTop">
-                  <div class="hDate" id="histTodayTitle">Aujourd’hui</div>
-                  <div class="hSmall" id="histStreak">streak: 0</div>
-                </div>
-                <div class="metaRow" id="histTodayChips"></div>
-              </div>
-
-              <div class="hRow">
-                <div class="hTop">
-                  <div class="hDate">7 derniers jours</div>
-                  <div class="hSmall" id="hist7Summary">—</div>
-                </div>
-                <div id="hist7List" class="list" style="margin-top:0;"></div>
-              </div>
-
-              <div class="row2">
-                <button id="btnClearHistory" class="btn danger" type="button">Effacer historique</button>
-                <button id="btnCopyWeekly" class="btn" type="button">Copier (7 jours)</button>
-              </div>
-            </div>
+        <div class="card" style="padding:12px;">
+          <div class="row">
+            <button class="btn small" id="btnPanic">Panic</button>
+            <button class="btn small" id="btnRitual">Rituel 10s</button>
           </div>
         </div>
       </div>
-    </div>
-    <!-- ===================== /DRAGGABLE DRAWER ===================== -->
+    </section>
 
-    <script>
-      (() => {
-        "use strict";
+    <!-- CAPTURE -->
+    <section class="card captureView" id="viewCapture" aria-label="Inbox">
+      <textarea id="taInbox" placeholder="" aria-label="Saisie Inbox"></textarea>
+      <div class="row" style="margin-top:10px;">
+        <div class="quiet">Ctrl/⌘ + Enter</div>
+        <div class="row" style="gap:8px;">
+          <button class="btn small ok" id="btnAdd">Ajouter</button>
+          <button class="btn small" id="btnToTriage">Aller au tri</button>
+        </div>
+      </div>
+    </section>
 
-        /* ========= Storage keys ========= */
-        const LS_KEY = "eliminator_state_v2";
-        const LS_PREF = "eliminator_prefs_v2";
-        const LS_HIST = "eliminator_history_v1";
+    <!-- TRIAGE -->
+    <section class="triageView" id="viewTriage" aria-label="Tri">
+      <div class="grid2">
+        <section class="card" aria-label="Liste Inbox">
+          <div class="row">
+            <b style="font-weight:950; letter-spacing:0.08em; text-transform:uppercase; font-size:12px; color:var(--muted);">Inbox</b>
+            <span class="dragHint">drag →</span>
+          </div>
+          <div class="list" id="listInbox" aria-label="Tâches Inbox"></div>
+        </section>
 
-        /* ========= Torions → Temps (min/max) ========= */
-        const TORION_TO_TIME = {
-          1: { min: 5, max: 5 },
-          2: { min: 5, max: 10 },
-          3: { min: 10, max: 30 },
-          5: { min: 30, max: 50 },
-          8: { min: 50, max: 80 },
-          13:{ min: 80, max: 120 },
-        };
+        <section class="card" aria-label="Liste Tri">
+          <div class="row">
+            <b style="font-weight:950; letter-spacing:0.08em; text-transform:uppercase; font-size:12px; color:var(--muted);">Tri</b>
+            <span class="dragHint">← drag</span>
+          </div>
+          <div class="list" id="listTriage" aria-label="Tâches triées"></div>
+        </section>
+      </div>
 
-        /* ========= Récompenses ========= */
-        const REWARD_LEVELS = [
-          { key: "faible", p: 0.12 },
-          { key: "moyenne", p: 0.22 },
-          { key: "rare", p: 0.06 },
-          { key: "off", p: 0.0 },
-        ];
+      <section class="card" style="margin-top:10px;" aria-label="Terminé">
+        <div class="row">
+          <b style="font-weight:950; letter-spacing:0.08em; text-transform:uppercase; font-size:12px; color:var(--muted);">Terminé</b>
+        </div>
+        <div class="list" id="listDone" aria-label="Tâches terminées"></div>
+      </section>
+    </section>
 
-        const LINES = [
-          "Fragment dégommé.",
-          "Torions en baisse.",
-          "Charge réduite.",
-          "Validation.",
-          "Exécution confirmée.",
-          "Réduction confirmée.",
-          "Progrès.",
-          "Nettoyage partiel.",
-          "Dissolution.",
-          "Terminé.",
-        ];
+    <!-- FOCUS -->
+    <section class="focusView" id="viewFocus" aria-label="Focus">
+      <div class="focusWrap">
+        <div class="focusCard">
+          <div class="focusTask" id="focusTaskText">Aucune</div>
 
-        /* ========= Fragments nommés ========= */
-        const FRAG_TEMPLATES = {
-          writing_report: ["Rassembler","Brut","Transférer","Relire","Finaliser","Envoyer"],
-          call_2: ["Numéro","Appel"],
-          sport_4: ["Préparer","Bloc","Bloc","Bloc"],
-        };
+          <div class="focusStats">
+            <div class="stat">
+              <span>Restant</span>
+              <b id="focusTorions">0</b>
+            </div>
+            <div class="stat">
+              <span>Minuteur</span>
+              <b id="focusTimer">—</b>
+            </div>
+          </div>
 
-        /* ========= DOM ========= */
-        const el = (id) => document.getElementById(id);
+          <div class="ring" id="focusRing" style="--p:0deg;">
+            <div class="ringCenter">
+              <div class="pct" id="focusPct">0%</div>
+              <div class="lbl">progression</div>
+            </div>
+          </div>
 
-        const torionsLeftEl = el("torionsLeft");
-        const timeLeftEl = el("timeLeft");
-        const pctDoneEl = el("pctDone");
-        const ringEl = el("ring");
+          <div class="focusBtns">
+            <button class="bigBtn primary" id="btnDego">Dégommer 1 torion</button>
+            <button class="bigBtn" id="btnTimer">Démarrer</button>
+            <button class="bigBtn" id="btnFinish">Terminer</button>
+            <button class="bigBtn" id="btnExitFocus">Sortir</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 
-        const curName = el("curName");
-        const curMeta = el("curMeta");
-        const curKey = el("curKey");
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-        const taskContainer = el("taskContainer");
+<script>
+(() => {
+  "use strict";
 
-        const btnRoulette = el("btnRoulette");
-        const btnSkip = el("btnSkip");
-        const btnDego = el("btnDego");
-        const btnElimNow = el("btnElimNow");
-        const btnReset = el("btnReset");
+  const LS_KEY = "eliminator_min_v1";
 
-        const toast = el("toast");
+  const el = (id) => document.getElementById(id);
 
-        const importText = el("importText");
-        const btnImport = el("btnImport");
-        const btnDemo = el("btnDemo");
+  const tabCapture = el("tabCapture");
+  const tabTriage  = el("tabTriage");
+  const tabFocus   = el("tabFocus");
 
-        const fragMinutesSel = el("fragMinutes");
-        const rewardLevelSel = el("rewardLevel");
-        const groupModeSel = el("groupMode");
-        const sortModeSel = el("sortMode");
+  const viewCapture = el("viewCapture");
+  const viewTriage  = el("viewTriage");
+  const viewFocus   = el("viewFocus");
 
-        const btnExpandAll = el("btnExpandAll");
-        const btnCollapseAll = el("btnCollapseAll");
+  const taInbox = el("taInbox");
+  const btnAdd = el("btnAdd");
+  const btnToTriage = el("btnToTriage");
 
-        const btnExport = el("btnExport");
-        const btnImportJson = el("btnImportJson");
+  const listInbox = el("listInbox");
+  const listTriage = el("listTriage");
+  const listDone = el("listDone");
 
-        /* Daily report UI */
-        const dailyChips = el("dailyChips");
-        const dailyReport = el("dailyReport");
-        const btnCopyDaily = el("btnCopyDaily");
-        const btnExportHistory = el("btnExportHistory");
+  const btnPanel = el("btnPanel");
+  const btnUndo = el("btnUndo");
+  const btnRedo = el("btnRedo");
 
-        /* History tab UI */
-        const histTodayTitle = el("histTodayTitle");
-        const histStreak = el("histStreak");
-        const histTodayChips = el("histTodayChips");
-        const hist7List = el("hist7List");
-        const hist7Summary = el("hist7Summary");
-        const btnClearHistory = el("btnClearHistory");
-        const btnCopyWeekly = el("btnCopyWeekly");
+  const selTorionMinutes = el("selTorionMinutes");
+  const selEnergyFilter = el("selEnergyFilter");
+  const selTunnel = el("selTunnel");
 
-        /* Drawer */
-        const drawer = el("drawer");
-        const drawerSheet = el("drawerSheet");
-        const drawerHandle = el("drawerHandle");
-        const btnDrawer = el("btnDrawer");
-        const btnHideDrawer = el("btnHideDrawer");
-        const pages = el("pages");
-        const tabs = Array.from(document.querySelectorAll(".tab"));
+  const btnExport = el("btnExport");
+  const btnImport = el("btnImport");
+  const btnResetAll = el("btnResetAll");
 
-        /* FX */
-        const fxCanvas = el("fx");
-        const fx = fxCanvas.getContext("2d");
+  const btnPreset = el("btnPreset");
+  const btnPresetPrev = el("btnPresetPrev");
+  const btnPresetNext = el("btnPresetNext");
+  const btnPresetAdd = el("btnPresetAdd");
+  const btnPresetEdit = el("btnPresetEdit");
+  const btnPresetDel = el("btnPresetDel");
 
-        /* ========= State ========= */
-        let state = loadState();
-        let prefs = loadPrefs();
-        let history = loadHistory();
-        let currentId = null;
+  const btnPanic = el("btnPanic");
+  const btnRitual = el("btnRitual");
 
-        /* ========= Load / Save ========= */
-        function loadState(){
-          try{
-            const raw = localStorage.getItem(LS_KEY);
-            if(!raw) return { tasks: [], initialTorions: 0, eliminatedCount: 0 };
-            const s = JSON.parse(raw);
-            if(!s || !Array.isArray(s.tasks)) return { tasks: [], initialTorions: 0, eliminatedCount: 0 };
-            return s;
-          }catch{
-            return { tasks: [], initialTorions: 0, eliminatedCount: 0 };
-          }
+  // Focus UI
+  const focusTaskText = el("focusTaskText");
+  const focusTorions = el("focusTorions");
+  const focusTimer = el("focusTimer");
+  const focusPct = el("focusPct");
+  const focusRing = el("focusRing");
+
+  const btnDego = el("btnDego");
+  const btnTimer = el("btnTimer");
+  const btnFinish = el("btnFinish");
+  const btnExitFocus = el("btnExitFocus");
+
+  const toast = el("toast");
+
+  // ---------- State ----------
+  let state = load() || makeInitial();
+
+  // History snapshots (light)
+  const MAX_HISTORY = 40;
+
+  function makeInitial(){
+    return {
+      version: 1,
+      torionMinutes: 5,
+      activePresetId: "p_default",
+      presets: [{
+        id: "p_default",
+        name: "Base",
+        defaults: {
+          context: "Travail",
+          category: "Sans catégorie",
+          priority: 2,
+          torions: 3,
+          energy: "moyen"
         }
-        function saveState(){
-          localStorage.setItem(LS_KEY, JSON.stringify(state));
+      }],
+      tasks: [],
+      focus: { taskId: null, running: false, endsAt: null, secondsLeft: 0, tunnel: false, ritualDone: false },
+      ui: { mode: "triage", panelOpen: true, energyFilter: "tous" },
+      history: { undo: [], redo: [] }
+    };
+  }
+
+  function save(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return null;
+      const obj = JSON.parse(raw);
+      if(!obj || !Array.isArray(obj.tasks) || !Array.isArray(obj.presets)) return null;
+      return obj;
+    }catch{
+      return null;
+    }
+  }
+
+  function pushHistory(){
+    // store snapshots without history itself
+    const snapshot = structuredClone({
+      ...state,
+      history: { undo: [], redo: [] }
+    });
+    state.history.undo.push(snapshot);
+    if(state.history.undo.length > MAX_HISTORY) state.history.undo.shift();
+    state.history.redo = [];
+    save();
+    updateUndoRedoBtns();
+  }
+
+  function undo(){
+    if(!state.history.undo.length) return;
+    const prev = state.history.undo.pop();
+    const current = structuredClone({ ...state, history: { undo: [], redo: [] }});
+    state.history.redo.push(current);
+    state = { ...prev, history: state.history };
+    save();
+    renderAll();
+  }
+
+  function redo(){
+    if(!state.history.redo.length) return;
+    const next = state.history.redo.pop();
+    const current = structuredClone({ ...state, history: { undo: [], redo: [] }});
+    state.history.undo.push(current);
+    state = { ...next, history: state.history };
+    save();
+    renderAll();
+  }
+
+  function updateUndoRedoBtns(){
+    btnUndo.disabled = state.history.undo.length === 0;
+    btnRedo.disabled = state.history.redo.length === 0;
+  }
+
+  // ---------- Helpers ----------
+  function uid(){
+    return Math.random().toString(36).slice(2,10) + "-" + Date.now().toString(36);
+  }
+  function now(){ return Date.now(); }
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(()=> toast.classList.remove("show"), 1100);
+  }
+
+  function activePreset(){
+    return state.presets.find(p => p.id === state.activePresetId) || state.presets[0];
+  }
+
+  function setMode(mode){
+    state.ui.mode = mode;
+    save();
+    renderMode();
+  }
+
+  function renderMode(){
+    // tabs
+    tabCapture.classList.toggle("active", state.ui.mode === "capture");
+    tabTriage.classList.toggle("active",  state.ui.mode === "triage");
+    tabFocus.classList.toggle("active",   state.ui.mode === "focus");
+
+    tabCapture.setAttribute("aria-selected", state.ui.mode === "capture" ? "true" : "false");
+    tabTriage.setAttribute("aria-selected",  state.ui.mode === "triage" ? "true" : "false");
+    tabFocus.setAttribute("aria-selected",   state.ui.mode === "focus" ? "true" : "false");
+
+    // views
+    viewCapture.style.display = (state.ui.mode === "capture") ? "block" : "none";
+    viewTriage.style.display  = (state.ui.mode === "triage")  ? "block" : "none";
+    viewFocus.style.display   = (state.ui.mode === "focus")   ? "block" : "none";
+
+    document.body.classList.toggle("focus", state.ui.mode === "focus");
+  }
+
+  function togglePanel(){
+    state.ui.panelOpen = !state.ui.panelOpen;
+    document.body.classList.toggle("panelOpen", state.ui.panelOpen);
+    save();
+  }
+
+  function updatePresetLabel(){
+    btnPreset.textContent = activePreset().name;
+  }
+
+  function computePercent(task){
+    if(!task) return 0;
+    const total = Math.max(1, task.torionsTotal || 1);
+    const rem = clamp(task.torionsRemaining || 0, 0, total);
+    return clamp(Math.round((1 - rem/total) * 100), 0, 100);
+  }
+
+  function formatTimer(s){
+    if(!Number.isFinite(s) || s <= 0) return "—";
+    const m = Math.floor(s/60);
+    const r = s % 60;
+    return `${String(m).padStart(2,"0")}:${String(r).padStart(2,"0")}`;
+  }
+
+  // ---------- Tri assisté (heuristiques simples) ----------
+  function suggestFields(text){
+    const t = (text || "").toLowerCase();
+
+    let category = activePreset().defaults.category;
+    let context  = activePreset().defaults.context;
+    let torions  = activePreset().defaults.torions;
+    let priority = activePreset().defaults.priority;
+    let energy   = activePreset().defaults.energy;
+
+    const has = (re) => re.test(t);
+
+    if(has(/\b(appeler|tel|téléphone|contacter)\b/)){
+      category = "Appels";
+      torions = 1;
+      energy = "faible";
+    }
+    if(has(/\b(encoder|encodage|note)\b/)){
+      category = "Encodage";
+      torions = Math.max(torions, 3);
+      energy = "faible";
+    }
+    if(has(/\b(rapport|rédaction|lettre|dossier)\b/)){
+      category = "Rédaction";
+      torions = Math.max(torions, 5);
+      energy = "moyen";
+    }
+    if(has(/\b(urgent|aujourd)\b/)){
+      priority = 3;
+    }
+    if(has(/\b(maison|perso)\b/)){
+      context = "Maison";
+    }
+    if(has(/\b(travail|hopital|hôpital|patient)\b/)){
+      context = "Travail";
+    }
+
+    // torions explicites: "(3)" ou "3t"
+    const m = t.match(/(?:\(|\s)(\d{1,2})\s*(?:t|torion|torions)\b/);
+    if(m){
+      const v = clamp(parseInt(m[1],10) || torions, 1, 50);
+      torions = v;
+    }
+
+    return { category, context, torions, priority, energy };
+  }
+
+  // ---------- Capture ----------
+  function addFromInbox(){
+    const raw = taInbox.value || "";
+    const lines = raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    if(!lines.length){
+      showToast("Vide.");
+      return;
+    }
+
+    pushHistory();
+
+    const baseOrder = nextOrder("inbox");
+    const preset = activePreset();
+
+    lines.forEach((line, idx) => {
+      const sug = suggestFields(line);
+      state.tasks.push({
+        id: uid(),
+        text: line,
+        list: "inbox",
+        order: baseOrder + idx,
+        context: sug.context ?? preset.defaults.context,
+        category: sug.category ?? preset.defaults.category,
+        priority: sug.priority ?? preset.defaults.priority,
+        energy: sug.energy ?? preset.defaults.energy,
+        torionsTotal: sug.torions ?? preset.defaults.torions,
+        torionsRemaining: sug.torions ?? preset.defaults.torions,
+        createdAt: now(),
+        updatedAt: now(),
+        doneAt: null
+      });
+    });
+
+    taInbox.value = "";
+    save();
+    renderLists();
+    showToast("Ajouté.");
+  }
+
+  function nextOrder(listName){
+    const items = state.tasks.filter(t => t.list === listName);
+    if(!items.length) return 1;
+    return Math.max(...items.map(t => t.order || 0)) + 1;
+  }
+
+  // ---------- Lists ----------
+  function filteredTasks(listName){
+    const energyFilter = state.ui.energyFilter || "tous";
+    return state.tasks
+      .filter(t => t.list === listName)
+      .filter(t => {
+        if(energyFilter === "tous") return true;
+        return (t.energy || "moyen") === energyFilter;
+      })
+      .sort((a,b) => (a.order||0) - (b.order||0));
+  }
+
+  function renderLists(){
+    listInbox.innerHTML = "";
+    listTriage.innerHTML = "";
+    listDone.innerHTML = "";
+
+    filteredTasks("inbox").forEach(t => listInbox.appendChild(renderTask(t)));
+    filteredTasks("triage").forEach(t => listTriage.appendChild(renderTask(t)));
+    state.tasks
+      .filter(t => t.list === "done")
+      .sort((a,b)=> (b.doneAt||0) - (a.doneAt||0))
+      .slice(0, 50)
+      .forEach(t => listDone.appendChild(renderDone(t)));
+
+    updatePresetLabel();
+    updateUndoRedoBtns();
+  }
+
+  function renderDone(task){
+    const wrap = document.createElement("div");
+    wrap.className = "task";
+    wrap.innerHTML = `
+      <div class="taskTop">
+        <div class="taskText done">${escapeHtml(task.text)}</div>
+        <div class="controls">
+          <button class="btn small" data-act="restore">Restaurer</button>
+          <button class="btn small danger" data-act="delete">Supprimer</button>
+        </div>
+      </div>
+      <div class="pillRow">
+        <span class="pill">${escapeHtml(task.context || "—")}</span>
+        <span class="pill">${escapeHtml(task.category || "—")}</span>
+      </div>
+    `;
+    wrap.querySelector('[data-act="restore"]').addEventListener("click", ()=>{
+      pushHistory();
+      task.list = "triage";
+      task.doneAt = null;
+      task.torionsRemaining = Math.max(1, task.torionsRemaining || task.torionsTotal || 1);
+      task.updatedAt = now();
+      task.order = nextOrder("triage");
+      save();
+      renderLists();
+    });
+
+    wrap.querySelector('[data-act="delete"]').addEventListener("click", ()=>{
+      if(!confirm("Supprimer ?")) return;
+      pushHistory();
+      state.tasks = state.tasks.filter(x => x.id !== task.id);
+      save();
+      renderLists();
+    });
+
+    return wrap;
+  }
+
+  function renderTask(task){
+    const wrap = document.createElement("div");
+    wrap.className = "task";
+    wrap.draggable = true;
+    wrap.dataset.id = task.id;
+
+    const p = computePercent(task);
+
+    wrap.innerHTML = `
+      <div class="taskTop">
+        <div>
+          <div class="taskText">${escapeHtml(task.text)}</div>
+          <div class="pillRow" style="margin-top:8px;">
+            <span class="pill">${escapeHtml(task.context || "—")}</span>
+            <span class="pill">${escapeHtml(task.category || "—")}</span>
+            <span class="pill">P${escapeHtml(String(task.priority || 2))}</span>
+            <span class="pill">${escapeHtml(String(task.torionsRemaining || 0))}/${escapeHtml(String(task.torionsTotal || 0))} torions</span>
+            <span class="pill">${p}%</span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="btn small ok" data-act="focus">Focus</button>
+          <button class="btn small" data-act="done">Terminer</button>
+          <button class="btn small danger" data-act="delete">Supprimer</button>
+        </div>
+      </div>
+
+      <div class="editRow" aria-label="Édition">
+        <select data-field="context" aria-label="Contexte">
+          ${optionHtml(task.context, ["Travail","Maison","Dehors","Autre"])}
+        </select>
+
+        <input type="text" data-field="category" aria-label="Catégorie" value="${escapeAttr(task.category || "")}" />
+
+        <select data-field="priority" aria-label="Priorité">
+          ${optionHtml(String(task.priority||2), ["1","2","3"])}
+        </select>
+
+        <select data-field="energy" aria-label="Énergie">
+          ${optionHtml(task.energy || "moyen", ["faible","moyen","haut"])}
+        </select>
+      </div>
+
+      <div class="editRow" style="grid-template-columns: 1fr 1fr;" aria-label="Estimation">
+        <input type="number" min="1" max="50" step="1" data-field="torionsTotal" aria-label="Torions (total)" value="${escapeAttr(String(task.torionsTotal||1))}" />
+        <button class="btn small" data-act="move">${task.list === "inbox" ? "→ Tri" : "← Inbox"}</button>
+      </div>
+    `;
+
+    // Actions
+    wrap.querySelector('[data-act="focus"]').addEventListener("click", ()=> startFocus(task.id));
+    wrap.querySelector('[data-act="done"]').addEventListener("click", ()=> markDone(task.id));
+    wrap.querySelector('[data-act="delete"]').addEventListener("click", ()=> deleteTask(task.id));
+    wrap.querySelector('[data-act="move"]').addEventListener("click", ()=> toggleList(task.id));
+
+    // Edits
+    wrap.querySelectorAll("[data-field]").forEach(inp => {
+      inp.addEventListener("change", ()=> {
+        pushHistory();
+        const field = inp.dataset.field;
+        if(field === "torionsTotal"){
+          const v = clamp(parseInt(inp.value,10) || 1, 1, 50);
+          task.torionsTotal = v;
+          task.torionsRemaining = clamp(task.torionsRemaining ?? v, 0, v);
+        }else if(field === "priority"){
+          task.priority = clamp(parseInt(inp.value,10) || 2, 1, 3);
+        }else if(field === "energy"){
+          task.energy = inp.value;
+        }else if(field === "context"){
+          task.context = inp.value;
+        }else if(field === "category"){
+          task.category = (inp.value || "").trim() || "Sans catégorie";
         }
+        task.updatedAt = now();
+        save();
+        renderLists();
+      });
+    });
 
-        function loadPrefs(){
-          try{
-            const raw = localStorage.getItem(LS_PREF);
-            if(!raw){
-              return {
-                fragMinutes: 10,
-                rewardIdx: 0,
-                groupMode: "cat",
-                sortMode: "smart",
-                drawerSnap: 0.62,
-              };
-            }
-            const p = JSON.parse(raw);
-            return {
-              fragMinutes: p.fragMinutes === 5 ? 5 : 10,
-              rewardIdx: Number.isFinite(p.rewardIdx) ? clamp(p.rewardIdx,0,3) : 0,
-              groupMode: (p.groupMode === "torions" || p.groupMode === "none") ? p.groupMode : "cat",
-              sortMode: typeof p.sortMode === "string" ? p.sortMode : "smart",
-              drawerSnap: Number.isFinite(p.drawerSnap) ? clamp(p.drawerSnap,0,0.88) : 0.62,
-            };
-          }catch{
-            return { fragMinutes: 10, rewardIdx: 0, groupMode: "cat", sortMode:"smart", drawerSnap:0.62 };
-          }
+    // Drag
+    wrap.addEventListener("dragstart", (e)=>{
+      wrap.classList.add("dragging");
+      e.dataTransfer.setData("text/plain", task.id);
+      e.dataTransfer.effectAllowed = "move";
+    });
+    wrap.addEventListener("dragend", ()=>{
+      wrap.classList.remove("dragging");
+      listInbox.classList.remove("dropZone");
+      listTriage.classList.remove("dropZone");
+    });
+
+    return wrap;
+  }
+
+  function toggleList(taskId){
+    const task = state.tasks.find(t => t.id === taskId);
+    if(!task) return;
+    pushHistory();
+    task.list = task.list === "inbox" ? "triage" : "inbox";
+    task.order = nextOrder(task.list);
+    task.updatedAt = now();
+    save();
+    renderLists();
+  }
+
+  function deleteTask(taskId){
+    const task = state.tasks.find(t => t.id === taskId);
+    if(!task) return;
+    if(!confirm("Supprimer ?")) return;
+    pushHistory();
+    state.tasks = state.tasks.filter(t => t.id !== taskId);
+    save();
+    renderLists();
+  }
+
+  function markDone(taskId){
+    const task = state.tasks.find(t => t.id === taskId);
+    if(!task) return;
+    pushHistory();
+    task.list = "done";
+    task.doneAt = now();
+    task.torionsRemaining = 0;
+    task.updatedAt = now();
+    if(state.focus.taskId === taskId){
+      stopTimer();
+      state.focus.taskId = null;
+      state.focus.running = false;
+      state.focus.ritualDone = false;
+    }
+    save();
+    renderLists();
+    if(state.ui.mode === "focus") renderFocus();
+  }
+
+  // Drop zones
+  function setupDropZones(){
+    [listInbox, listTriage].forEach(zone => {
+      zone.addEventListener("dragover", (e)=>{
+        e.preventDefault();
+        zone.classList.add("dropZone");
+        e.dataTransfer.dropEffect = "move";
+      });
+      zone.addEventListener("dragleave", ()=>{
+        zone.classList.remove("dropZone");
+      });
+      zone.addEventListener("drop", (e)=>{
+        e.preventDefault();
+        zone.classList.remove("dropZone");
+        const id = e.dataTransfer.getData("text/plain");
+        const task = state.tasks.find(t => t.id === id);
+        if(!task) return;
+
+        pushHistory();
+        const targetList = (zone === listInbox) ? "inbox" : "triage";
+        task.list = targetList;
+        task.order = nextOrder(targetList);
+        task.updatedAt = now();
+        save();
+        renderLists();
+      });
+    });
+  }
+
+  // ---------- Focus ----------
+  function startFocus(taskId){
+    const task = state.tasks.find(t => t.id === taskId);
+    if(!task) return;
+    pushHistory();
+    state.focus.taskId = taskId;
+    state.ui.mode = "focus";
+    state.focus.running = false;
+    state.focus.endsAt = null;
+    state.focus.secondsLeft = 0;
+    state.focus.ritualDone = false;
+    save();
+    renderMode();
+    renderFocus();
+  }
+
+  function currentTask(){
+    return state.tasks.find(t => t.id === state.focus.taskId) || null;
+  }
+
+  let tickHandle = null;
+
+  function startTimer(){
+    const task = currentTask();
+    if(!task) return;
+    if(state.focus.tunnel && !state.focus.ritualDone){
+      showToast("Rituel.");
+      return;
+    }
+    const seconds = state.torionMinutes * 60;
+    state.focus.running = true;
+    state.focus.secondsLeft = seconds;
+    state.focus.endsAt = now() + seconds*1000;
+    save();
+    renderFocus();
+    scheduleTick();
+  }
+
+  function pauseTimer(){
+    state.focus.running = false;
+    state.focus.endsAt = null;
+    save();
+    renderFocus();
+    if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
+  }
+
+  function stopTimer(){
+    state.focus.running = false;
+    state.focus.endsAt = null;
+    state.focus.secondsLeft = 0;
+    if(tickHandle){ clearInterval(tickHandle); tickHandle = null; }
+    save();
+  }
+
+  function scheduleTick(){
+    if(tickHandle) clearInterval(tickHandle);
+    tickHandle = setInterval(()=>{
+      if(!state.focus.running || !state.focus.endsAt) return;
+      const leftMs = state.focus.endsAt - now();
+      const left = Math.max(0, Math.ceil(leftMs / 1000));
+      state.focus.secondsLeft = left;
+
+      if(left <= 0){
+        // torion finished
+        pushHistory();
+        degoOneTorion();
+        stopTimer();
+        // auto-restart in tunnel? no, keep explicit
+        renderFocus();
+        renderLists();
+        showToast("Torion.");
+        return;
+      }
+      save();
+      renderFocus();
+    }, 250);
+  }
+
+  function degoOneTorion(){
+    const task = currentTask();
+    if(!task) return;
+
+    if(state.focus.tunnel && !state.focus.ritualDone){
+      showToast("Rituel.");
+      return;
+    }
+
+    if(task.torionsRemaining <= 0){
+      return;
+    }
+    pushHistory();
+    task.torionsRemaining = Math.max(0, (task.torionsRemaining || 0) - 1);
+    task.updatedAt = now();
+
+    if(task.torionsRemaining <= 0){
+      markDone(task.id);
+      return;
+    }
+
+    save();
+    renderFocus();
+    renderLists();
+  }
+
+  function renderFocus(){
+    const task = currentTask();
+
+    if(!task){
+      focusTaskText.textContent = "Aucune";
+      focusTorions.textContent = "0";
+      focusTimer.textContent = "—";
+      focusPct.textContent = "0%";
+      focusRing.style.setProperty("--p","0deg");
+      btnDego.disabled = true;
+      btnTimer.disabled = true;
+      btnFinish.disabled = true;
+      return;
+    }
+
+    focusTaskText.textContent = task.text;
+    focusTorions.textContent = String(task.torionsRemaining || 0);
+
+    const pct = computePercent(task);
+    focusPct.textContent = `${pct}%`;
+    focusRing.style.setProperty("--p", `${pct*3.6}deg`);
+
+    focusTimer.textContent = formatTimer(state.focus.secondsLeft);
+
+    btnDego.disabled = false;
+    btnFinish.disabled = false;
+
+    btnTimer.textContent = state.focus.running ? "Pause" : "Démarrer";
+  }
+
+  function exitFocus(){
+    stopTimer();
+    state.ui.mode = "triage";
+    save();
+    renderMode();
+  }
+
+  // ---------- Panic & Ritual ----------
+  function ritual10s(){
+    // “simulable”: simple countdown 10s, pas d’animation inutile
+    state.focus.ritualDone = false;
+    save();
+
+    let left = 10;
+    showToast("10s");
+    const h = setInterval(()=>{
+      left--;
+      if(left <= 0){
+        clearInterval(h);
+        state.focus.ritualDone = true;
+        save();
+        showToast("OK");
+        return;
+      }
+    }, 1000);
+  }
+
+  function pickWeightedTask(){
+    // pondéré par torions restants, uniquement triage+inbox (pas done)
+    const candidates = state.tasks
+      .filter(t => t.list !== "done")
+      .filter(t => (t.torionsRemaining || 0) > 0);
+
+    if(!candidates.length) return null;
+
+    const weights = candidates.map(t => Math.max(1, Math.ceil(t.torionsRemaining)));
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random()*total;
+    for(let i=0;i<candidates.length;i++){
+      r -= weights[i];
+      if(r <= 0) return candidates[i];
+    }
+    return candidates[candidates.length-1];
+  }
+
+  function panic(){
+    const t = pickWeightedTask();
+    if(!t){
+      showToast("Vide.");
+      return;
+    }
+    startFocus(t.id);
+    // démarre 1 torion direct, si pas de tunnel ou ritual done
+    if(state.focus.tunnel){
+      showToast("Rituel.");
+    }else{
+      startTimer();
+    }
+  }
+
+  // ---------- Presets ----------
+  function presetPrev(){
+    const idx = state.presets.findIndex(p => p.id === state.activePresetId);
+    const next = (idx <= 0) ? state.presets.length - 1 : idx - 1;
+    state.activePresetId = state.presets[next].id;
+    save();
+    updatePresetLabel();
+    showToast(state.presets[next].name);
+  }
+
+  function presetNext(){
+    const idx = state.presets.findIndex(p => p.id === state.activePresetId);
+    const next = (idx >= state.presets.length - 1) ? 0 : idx + 1;
+    state.activePresetId = state.presets[next].id;
+    save();
+    updatePresetLabel();
+    showToast(state.presets[next].name);
+  }
+
+  function presetAdd(){
+    const name = prompt("Nom", "Nouveau");
+    if(!name) return;
+    pushHistory();
+    const id = "p_" + uid();
+    const base = activePreset().defaults;
+    state.presets.push({
+      id,
+      name: name.trim().slice(0,24),
+      defaults: { ...base }
+    });
+    state.activePresetId = id;
+    save();
+    updatePresetLabel();
+    showToast("OK");
+  }
+
+  function presetEdit(){
+    const p = activePreset();
+    const name = prompt("Nom", p.name);
+    if(name === null) return;
+
+    const context = prompt("Contexte", p.defaults.context);
+    if(context === null) return;
+
+    const category = prompt("Catégorie", p.defaults.category);
+    if(category === null) return;
+
+    const tor = prompt("Torions", String(p.defaults.torions));
+    if(tor === null) return;
+
+    const pr = prompt("Priorité (1-3)", String(p.defaults.priority));
+    if(pr === null) return;
+
+    const en = prompt("Énergie (faible/moyen/haut)", p.defaults.energy);
+    if(en === null) return;
+
+    pushHistory();
+    p.name = name.trim().slice(0,24) || p.name;
+    p.defaults.context = (context.trim() || p.defaults.context);
+    p.defaults.category = (category.trim() || p.defaults.category);
+    p.defaults.torions = clamp(parseInt(tor,10) || p.defaults.torions, 1, 50);
+    p.defaults.priority = clamp(parseInt(pr,10) || p.defaults.priority, 1, 3);
+    p.defaults.energy = (["faible","moyen","haut"].includes((en||"").trim()) ? en.trim() : p.defaults.energy);
+    save();
+    updatePresetLabel();
+    showToast("OK");
+  }
+
+  function presetDel(){
+    if(state.presets.length <= 1){
+      showToast("Non.");
+      return;
+    }
+    if(!confirm("Supprimer preset ?")) return;
+    pushHistory();
+    const id = state.activePresetId;
+    state.presets = state.presets.filter(p => p.id !== id);
+    state.activePresetId = state.presets[0].id;
+    save();
+    updatePresetLabel();
+    showToast("OK");
+  }
+
+  // ---------- Export/Import ----------
+  function exportJson(){
+    const payload = structuredClone(state);
+    // ne pas exporter l’historique (optionnel)
+    payload.history = { undo: [], redo: [] };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "eliminator.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Export.");
+  }
+
+  function importJson(){
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.onchange = async () => {
+      const file = input.files && input.files[0];
+      if(!file) return;
+      try{
+        const txt = await file.text();
+        const obj = JSON.parse(txt);
+        if(!obj || !Array.isArray(obj.tasks) || !Array.isArray(obj.presets)){
+          showToast("JSON?");
+          return;
         }
-        function savePrefs(){
-          localStorage.setItem(LS_PREF, JSON.stringify(prefs));
-        }
-
-        function loadHistory(){
-          try{
-            const raw = localStorage.getItem(LS_HIST);
-            if(!raw){
-              return { events: [], keepDays: 365 };
-            }
-            const h = JSON.parse(raw);
-            if(!h || !Array.isArray(h.events)) return { events: [], keepDays: 365 };
-            return {
-              events: h.events,
-              keepDays: Number.isFinite(h.keepDays) ? clamp(h.keepDays,30,1200) : 365
-            };
-          }catch{
-            return { events: [], keepDays: 365 };
-          }
-        }
-        function saveHistory(){
-          localStorage.setItem(LS_HIST, JSON.stringify(history));
-        }
-
-        /* ========= Helpers ========= */
-        function uid(){
-          return Math.random().toString(36).slice(2,10) + "-" + Date.now().toString(36);
-        }
-        function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
-        function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
-        function pad2(n){ return String(n).padStart(2,"0"); }
-        function dayKey(d=new Date()){
-          return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-        }
-        function fmtDayHuman(key){
-          // key: YYYY-MM-DD
-          const [y,m,dd] = key.split("-").map(Number);
-          const d = new Date(y, (m||1)-1, dd||1);
-          return new Intl.DateTimeFormat("fr-BE", { weekday:"short", day:"2-digit", month:"2-digit" }).format(d);
-        }
-
-        function formatTorions(n){
-          if (Math.abs(n - Math.round(n)) < 0.001) return String(Math.round(n));
-          return n.toFixed(1);
-        }
-
-        function remainingTorions(){
-          return state.tasks.reduce((acc,t)=> acc + (t.eliminated ? 0 : (t.torionsRemaining || 0)), 0);
-        }
-
-        function remainingTime(){
-          let min=0, max=0;
-          for(const t of state.tasks){
-            if(t.eliminated) continue;
-            const frac = t.torionsTotal > 0 ? (t.torionsRemaining / t.torionsTotal) : 0;
-            const tmin = Math.round((t.timeMin||0)*frac);
-            const tmax = Math.round((t.timeMax||0)*frac);
-            min += tmin; max += tmax;
-          }
-          return {min,max};
-        }
-
-        function showToast(msg){
-          toast.textContent = msg;
-          toast.classList.add("show");
-          setTimeout(()=> toast.classList.remove("show"), 1150);
-        }
-
-        async function copyToClipboard(text){
-          try{
-            await navigator.clipboard.writeText(text);
-            showToast("Copié.");
-          }catch{
-            // fallback
-            const ta = document.createElement("textarea");
-            ta.value = text;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand("copy");
-            ta.remove();
-            showToast("Copié.");
-          }
-        }
-
-        /* ========= History: logging ========= */
-        function pruneHistory(){
-          const keepMs = history.keepDays * 24 * 60 * 60 * 1000;
-          const now = Date.now();
-          history.events = history.events.filter(e => (now - (e.ts||0)) <= keepMs);
-        }
-
-        function logEvent(evt){
-          // evt = {kind, taskId, taskName, type, torions, minutes, fragments, meta}
-          const e = {
-            id: uid(),
-            ts: Date.now(),
-            day: dayKey(new Date()),
-            kind: evt.kind || "event",
-            taskId: evt.taskId || null,
-            taskName: evt.taskName || null,
-            taskType: evt.taskType || null,
-            torions: Number.isFinite(evt.torions) ? Math.round(evt.torions*10)/10 : 0,
-            minutes: Number.isFinite(evt.minutes) ? Math.round(evt.minutes) : 0,
-            fragments: Number.isFinite(evt.fragments) ? Math.round(evt.fragments) : 0,
-            meta: evt.meta || null,
-          };
-          history.events.push(e);
-          pruneHistory();
-          saveHistory();
-        }
-
-        function aggregateByDay(){
-          const map = new Map();
-          for(const e of history.events){
-            const k = e.day || dayKey(new Date(e.ts||Date.now()));
-            if(!map.has(k)){
-              map.set(k, {
-                day: k,
-                fragments: 0,
-                tasksCompleted: 0,
-                torionsEliminated: 0,
-                minutesFocused: 0,
-                imports: 0,
-                resets: 0,
-                events: 0
-              });
-            }
-            const d = map.get(k);
-            d.events += 1;
-
-            if(e.kind === "fragment"){
-              d.fragments += (e.fragments || 0);
-              d.minutesFocused += (e.minutes || 0);
-              d.torionsEliminated += (e.torions || 0);
-            }else if(e.kind === "task_eliminated"){
-              d.tasksCompleted += 1;
-              d.torionsEliminated += (e.torions || 0);
-            }else if(e.kind === "import"){
-              d.imports += 1;
-            }else if(e.kind === "reset"){
-              d.resets += 1;
-            }
-          }
-          return map;
-        }
-
-        function streakFromMap(map){
-          // streak = jours consécutifs en partant d'aujourd'hui avec activité (fragment ou tâche complétée)
-          let s = 0;
-          let d = new Date();
-          for(;;){
-            const k = dayKey(d);
-            const x = map.get(k);
-            const active = x && ((x.fragments || 0) > 0 || (x.tasksCompleted || 0) > 0);
-            if(!active) break;
-            s += 1;
-            d.setDate(d.getDate() - 1);
-          }
-          return s;
-        }
-
-        function buildDailyReport(dayStats, dayKeyStr){
-          const dateObjParts = dayKeyStr.split("-").map(Number);
-          const dt = new Date(dateObjParts[0], dateObjParts[1]-1, dateObjParts[2]);
-          const title = new Intl.DateTimeFormat("fr-BE", { weekday:"long", day:"2-digit", month:"long", year:"numeric" }).format(dt);
-
-          const lines = [];
-          lines.push(`Rapport — ${title}`);
-          lines.push(``);
-          lines.push(`- Fragments dégommés : ${dayStats.fragments || 0}`);
-          lines.push(`- Tâches éliminées : ${dayStats.tasksCompleted || 0}`);
-          lines.push(`- Temps focus estimé : ${Math.round(dayStats.minutesFocused || 0)} min`);
-          lines.push(`- Torions éliminés : ${formatTorions(dayStats.torionsEliminated || 0)}`);
-          lines.push(`- Imports : ${dayStats.imports || 0}`);
-          lines.push(`- Resets : ${dayStats.resets || 0}`);
-          lines.push(``);
-          // mini interprétation utile (sans poésie inutile)
-          const mf = Math.round(dayStats.minutesFocused || 0);
-          if(mf === 0 && (dayStats.fragments || 0) === 0 && (dayStats.tasksCompleted || 0) === 0){
-            lines.push(`Note : activité = 0. Journée “silencieuse”. (Parfois c’est du repos, parfois c’est du sabotage. À toi de trancher.)`);
-          }else if(mf >= 60){
-            lines.push(`Note : focus solide (≥ 60 min). Très bon signal pour l’inertie cognitive : tu as cassé la glace.`);
-          }else{
-            lines.push(`Note : activité non nulle. C’est ça qu’on veut : du mouvement réel, pas du fantasme de productivité.`);
-          }
-          return lines.join("\n");
-        }
-
-        function exportHistoryJson(){
-          const payload = {
-            version: 1,
-            exportedAt: new Date().toISOString(),
-            history,
-          };
-          const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "eliminator_history.json";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-          showToast("Export.");
-        }
-
-        function clearHistory(){
-          if(!confirm("Effacer l'historique ?")) return;
-          history = { events: [], keepDays: 365 };
-          saveHistory();
-          showToast("Historique effacé.");
-          render();
-        }
-
-        /* ========= FX ========= */
-        function resizeFx(){
-          fxCanvas.width = window.innerWidth * devicePixelRatio;
-          fxCanvas.height = window.innerHeight * devicePixelRatio;
-          fx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-        }
-        window.addEventListener("resize", resizeFx, { passive:true });
-        resizeFx();
-
-        function burst(strength=1){
-          const W = window.innerWidth, H = window.innerHeight;
-          const cx = W/2, cy = H - 140;
-          const n = Math.floor(46*strength);
-          const particles=[];
-          for(let i=0;i<n;i++){
-            const ang = -Math.PI/2 + (Math.random()-0.5)*1.2;
-            const spd = (2 + Math.random()*5)*strength;
-            particles.push({
-              x:cx, y:cy,
-              vx: Math.cos(ang)*spd,
-              vy: Math.sin(ang)*spd,
-              life: 36 + Math.random()*22,
-              r: 1 + Math.random()*2*strength
-            });
-          }
-          let frame=0;
-          const tick=()=>{
-            frame++;
-            fx.clearRect(0,0,W,H);
-            fx.fillStyle="rgba(230,230,230,0.85)";
-            for(const p of particles){
-              p.x += p.vx; p.y += p.vy;
-              p.vy += 0.12;
-              p.life -= 1;
-              fx.globalAlpha = Math.max(0, p.life/60);
-              fx.beginPath();
-              fx.arc(p.x,p.y,p.r,0,Math.PI*2);
-              fx.fill();
-            }
-            if(frame<56) requestAnimationFrame(tick);
-            else fx.clearRect(0,0,W,H);
-          };
-          requestAnimationFrame(tick);
-        }
-
-        function maybeReward(){
-          const lvl = REWARD_LEVELS[prefs.rewardIdx] || REWARD_LEVELS[0];
-          if(lvl.p <= 0) return;
-          if(Math.random() < lvl.p){
-            const r = Math.random();
-            if(r < 0.55) burst(1.6);
-            else if(r < 0.82) burst(1.15);
-            showToast(pick(LINES));
-          }
-        }
-
-        /* ========= Parsing (robuste) ========= */
-        function stripDecor(s){
-          return (s || "")
-            .replace(/^[#>\-\*\u2022\s]+/g,"")
-            .replace(/[:：\-\u2013\u2014\s]+$/g,"")
-            .replace(/\s{2,}/g," ")
-            .trim();
-        }
-
-        function isHeaderLine(line){
-          const s = (line || "").trim();
-          if(!s) return false;
-
-          if(/[:：]\s*$/.test(s)) return true;
-          if(/^#{1,6}\s+/.test(s)) return true;
-          if(/^\*\*.+\*\*$/.test(s)) return true;
-
-          const looksLikeTaskPrefix = /^(\s*([-*•]|—|–)\s+|\s*\d+[.)]\s+|\s*[-*•]?\s*\[\s*[xX ]\s*\]\s+)/.test(s);
-          if(looksLikeTaskPrefix) return false;
-
-          const lettersOnly = s.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g,"");
-          const upperRatio = lettersOnly ? (lettersOnly.replace(/[^A-ZÀ-ÖØ-Ý]/g,"").length / lettersOnly.length) : 0;
-          if(s.length <= 44 && upperRatio > 0.8 && !/\d/.test(s)) return true;
-
-          return false;
-        }
-
-        function parseTimeToMinutes(txt){
-          const s = txt.toLowerCase();
-          const hm = s.match(/(\d+(?:[.,]\d+)?)\s*h(?:eures?)?\s*(\d{1,2})?\s*(?:min|m)?\b/);
-          if(hm){
-            const h = Number(String(hm[1]).replace(",","."));
-            const m = hm[2] ? Number(hm[2]) : 0;
-            return Math.round(h*60 + m);
-          }
-          const mOnly = s.match(/(\d+)\s*(?:min|minutes|m)\b/);
-          if(mOnly) return Number(mOnly[1]);
-          return null;
-        }
-
-        function extractTime(line){
-          const range = line.match(/(\d+(?:[.,]\d+)?)\s*(?:à|a|to|[-–—])\s*(\d+(?:[.,]\d+)?)\s*(?:min|minutes|m)\b/i);
-          if(range){
-            const a = Number(String(range[1]).replace(",","."));
-            const b = Number(String(range[2]).replace(",","."));
-            return { min: Math.round(a), max: Math.round(b), raw: range[0] };
-          }
-          const hLike = line.match(/(\d+(?:[.,]\d+)?)\s*h(?:eures?)?\s*(\d{1,2})?\s*(?:min|m)?\b/i);
-          if(hLike){
-            const mins = parseTimeToMinutes(hLike[0]);
-            return { min: mins, max: mins, raw: hLike[0] };
-          }
-          const single = line.match(/(\d+(?:[.,]\d+)?)\s*(?:min|minutes|m)\b/i);
-          if(single){
-            const v = Number(String(single[1]).replace(",","."));
-            return { min: Math.round(v), max: Math.round(v), raw: single[0] };
-          }
-          return null;
-        }
-
-        function extractTorions(line){
-          const patterns = [
-            /(\d+(?:[.,]\d+)?)\s*(?:t(?:orions?)?|torions?|otorions?|ethorions?|points?|pts)\b/i,
-            /[\(\[]\s*(\d+(?:[.,]\d+)?)\s*(?:t(?:orions?)?|torions?|points?|pts)?\s*[\)\]]/i,
-            /\bx\s*(\d+(?:[.,]\d+)?)\b/i,
-          ];
-
-          for(const re of patterns){
-            const m = line.match(re);
-            if(m){
-              const v = Number(String(m[1]).replace(",","."));
-              if(Number.isFinite(v) && v > 0) return { value: v, raw: m[0] };
-            }
-          }
-
-          const trailing = line.match(/(?:^|[\s–—-])(\d+(?:[.,]\d+)?)\s*$/);
-          if(trailing){
-            const v = Number(String(trailing[1]).replace(",","."));
-            if(Number.isFinite(v) && v > 0) return { value: v, raw: trailing[0] };
-          }
-
-          return null;
-        }
-
-        function timeFromTorions(torions){
-          const rounded = Math.round(torions);
-          if(TORION_TO_TIME[rounded]) return { ...TORION_TO_TIME[rounded] };
-          const mins = Math.max(5, Math.round(torions * 5));
-          return { min: mins, max: mins };
-        }
-
-        function cleanLinePrefix(line){
-          let s = line;
-          s = s.replace(/~~/g,"");
-          s = s.replace(/^\s*[-*•]?\s*\[\s*[xX ]\s*\]\s*/,"");
-          s = s.replace(/^\s*[✅✔☑]+\s*/,"");
-          s = s.replace(/^\s*(?:[-*•]|—|–)\s+/,"");
-          s = s.replace(/^\s*\d+[.)]\s+/,"");
-          return s.trim();
-        }
-
-        function detectEliminated(originalLine){
-          const s = originalLine || "";
-          if(s.includes("~~")) return true;
-          if(/^\s*[-*•]?\s*\[\s*[xX]\s*\]\s*/.test(s)) return true;
-          if(/^\s*[✅✔☑]/.test(s)) return true;
-          return false;
-        }
-
-        function parsePastedText(raw){
-          const txt = (raw || "").replace(/\u00A0/g," ").trim();
-          if(!txt) return [];
-
-          if(/^\s*[\[{]/.test(txt)){
-            try{
-              const data = JSON.parse(txt);
-              const arr = Array.isArray(data) ? data : (data && Array.isArray(data.tasks) ? data.tasks : null);
-              if(arr){
-                return arr.map((x)=>{
-                  if(typeof x === "string"){
-                    return makeTask({ name: x.trim(), type: "Sans type", torionsTotal: 1, timeMin: 5, timeMax: 5, eliminated:false });
-                  }
-                  if(x && typeof x === "object"){
-                    const name = String(x.name || x.title || "Tâche").trim();
-                    const type = String(x.type || x.cat || x.category || "Sans type").trim();
-                    const tor = Number(x.torionsTotal ?? x.torions ?? x.points ?? 1);
-                    const elim = !!(x.eliminated || x.done);
-                    const tmin = Number(x.timeMin ?? 5);
-                    const tmax = Number(x.timeMax ?? tmin);
-                    const safeTor = (Number.isFinite(tor) && tor > 0) ? tor : 1;
-                    const safeMin = (Number.isFinite(tmin) && tmin > 0) ? tmin : 5;
-                    const safeMax = (Number.isFinite(tmax) && tmax > 0) ? tmax : safeMin;
-                    return makeTask({ name, type, torionsTotal: safeTor, timeMin: safeMin, timeMax: safeMax, eliminated: elim });
-                  }
-                  return null;
-                }).filter(Boolean);
-              }
-            }catch{}
-          }
-
-          const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-
-          const tasks = [];
-          let currentType = "Sans type";
-
-          for(const original of lines){
-            if(isHeaderLine(original)){
-              currentType = stripDecor(original);
-              if(!currentType) currentType = "Sans type";
-              continue;
-            }
-
-            const eliminated = detectEliminated(original);
-            let line = cleanLinePrefix(original);
-            if(!line) continue;
-
-            const timeInfo = extractTime(line);
-            if(timeInfo) line = line.replace(timeInfo.raw, " ");
-
-            const torInfo = extractTorions(line);
-            if(torInfo) line = line.replace(torInfo.raw, " ");
-
-            let name = stripDecor(line.replace(/\s*[–—-]\s*/g," ").replace(/\s{2,}/g," "));
-            if(!name) name = "Tâche";
-
-            let torionsTotal = torInfo ? torInfo.value : null;
-
-            let timeMin, timeMax;
-
-            if(timeInfo){
-              timeMin = timeInfo.min;
-              timeMax = timeInfo.max;
-              if(!torionsTotal){
-                const avg = (timeMin + timeMax) / 2;
-                torionsTotal = Math.max(1, Math.round(avg / 5));
-              }
-            }
-
-            if(!torionsTotal) torionsTotal = 1;
-
-            if(timeMin == null || timeMax == null){
-              const est = timeFromTorions(torionsTotal);
-              timeMin = est.min;
-              timeMax = est.max;
-            }
-
-            tasks.push(makeTask({
-              name,
-              type: currentType,
-              torionsTotal,
-              timeMin,
-              timeMax,
-              eliminated
-            }));
-          }
-
-          return tasks;
-        }
-
-        function makeTask({name, type, torionsTotal, timeMin, timeMax, eliminated}){
-          const id = uid();
-          const torionsRemaining = eliminated ? 0 : torionsTotal;
-
-          const lname = (name||"").toLowerCase();
-          const ltype = (type||"").toLowerCase();
-
-          let fragMode="anonymous";
-          let fragLabels=[];
-          let fragTotal = eliminated ? 0 : Math.max(1, Math.round(torionsTotal));
-          let fragRemaining = eliminated ? 0 : fragTotal;
-
-          const isWriting =
-            /rapport|note|rédaction|lettre|dossier|compléter|consultation/i.test(lname) ||
-            /rapport|note|rédaction/i.test(ltype);
-
-          const isCall =
-            /appeler|contacter|téléphone|tel|call/i.test(lname) ||
-            /appel/i.test(ltype);
-
-          const isSport =
-            /sport|mouvement|gym|course/i.test(lname) ||
-            /sport/i.test(ltype);
-
-          if(isWriting){
-            fragMode="named";
-            fragLabels = FRAG_TEMPLATES.writing_report.slice();
-            fragTotal = fragLabels.length;
-            fragRemaining = eliminated ? 0 : fragTotal;
-          }else if(isCall){
-            fragMode="named";
-            fragLabels = FRAG_TEMPLATES.call_2.slice();
-            fragTotal = fragLabels.length;
-            fragRemaining = eliminated ? 0 : fragTotal;
-          }else if(isSport){
-            fragMode="named";
-            fragLabels = FRAG_TEMPLATES.sport_4.slice();
-            fragTotal = fragLabels.length;
-            fragRemaining = eliminated ? 0 : fragTotal;
-          }
-
-          return {
-            id,
-            name,
-            type,
-            torionsTotal,
-            torionsRemaining,
-            timeMin,
-            timeMax,
-            eliminated: !!eliminated,
-
-            fragMode,
-            fragTotal,
-            fragRemaining,
-            fragLabels,
-
-            fragNotes: {},
-            fragPhotos: {},
-          };
-        }
-
-        function fragLabel(t, fragIdx){
-          if(t.fragMode === "named" && Array.isArray(t.fragLabels) && t.fragLabels.length){
-            const pos = fragIdx - 1;
-            return t.fragLabels[pos] || `Fragment ${fragIdx}`;
-          }
-          return `Fragment ${fragIdx}`;
-        }
-
-        function rescaleTorionsOnFragment(t){
-          if(t.eliminated) return;
-          const total = Math.max(1, t.fragTotal || 1);
-          const delta = t.torionsTotal / total;
-          const next = Math.max(0, (t.torionsRemaining || 0) - delta);
-          t.torionsRemaining = Math.round(next * 10) / 10;
-
-          if(t.torionsRemaining <= 0.001){
-            t.torionsRemaining = 0;
-            t.eliminated = true;
-            t.fragRemaining = 0;
-            state.eliminatedCount = (state.eliminatedCount || 0) + 1;
-            maybeReward();
-          }
-        }
-
-        /* ========= Roulette ========= */
-        function pickWeighted(){
-          const active = state.tasks.filter(t => !t.eliminated && (t.torionsRemaining||0) > 0);
-          if(!active.length) return null;
-
-          const weights = active.map(t => Math.max(1, Math.ceil(t.torionsRemaining)));
-          const total = weights.reduce((a,b)=>a+b,0);
-          let r = Math.random()*total;
-          for(let i=0;i<active.length;i++){
-            r -= weights[i];
-            if(r <= 0) return active[i];
-          }
-          return active[active.length-1];
-        }
-
-        /* ========= Files ========= */
-        async function fileToDataURL(file, maxW=900){
-          const dataUrl = await new Promise((res,rej)=>{
-            const r = new FileReader();
-            r.onload = ()=> res(r.result);
-            r.onerror = rej;
-            r.readAsDataURL(file);
-          });
-
-          const img = await new Promise((res,rej)=>{
-            const im = new Image();
-            im.onload = ()=> res(im);
-            im.onerror = rej;
-            im.src = dataUrl;
-          });
-
-          const scale = Math.min(1, maxW / img.width);
-          const w = Math.round(img.width * scale);
-          const h = Math.round(img.height * scale);
-          const c = document.createElement("canvas");
-          c.width = w; c.height = h;
-          const ctx = c.getContext("2d");
-          ctx.drawImage(img,0,0,w,h);
-          return c.toDataURL("image/jpeg", 0.82);
-        }
-
-        /* ========= Actions ========= */
-        function doImport(){
-          const raw = (importText.value || "").trim();
-          if(!raw){ showToast("Rien."); return; }
-
-          const tasks = parsePastedText(raw);
-          if(!tasks.length){ showToast("Import: 0"); return; }
-
-          state.tasks = tasks;
-          state.eliminatedCount = tasks.filter(t=>t.eliminated).length;
-          state.initialTorions = tasks.reduce((a,t)=> a + (t.eliminated ? 0 : (t.torionsTotal || 0)), 0);
-
-          logEvent({
-            kind: "import",
-            torions: state.initialTorions,
-            meta: { tasks: tasks.length, eliminated: state.eliminatedCount }
-          });
-
-          currentId = null;
-          saveState();
-          showToast("Importé.");
-          render();
-        }
-
-        function loadDemo(){
-          importText.value = [
-            "APPELS:",
-            "- [ ] Appeler Samira — 5 min",
-            "- [ ] Contacter Dr Starkel — 2 torions — 5 à 10 min",
-            "- [x] Appeler Hugo — 1 torion",
-            "",
-            "RAPPORTS",
-            "1) Faire le rapport (8)",
-            "2) Compléter notes urgences — 50-80 min",
-            "",
-            "ORGANISATION",
-            "• Déplacer un rendez-vous — 1",
-            "",
-            "PERSO",
-            "✅ Faire du sport — 30 min"
-          ].join("\n");
-          showToast("Exemple.");
-        }
-
-        function roulette(){
-          const t = pickWeighted();
-          if(!t){
-            currentId = null;
-            showToast("Vide.");
-            burst(2.0);
-            render();
-            return;
-          }
-          currentId = t.id;
-          showToast("Roulette.");
-          render();
-        }
-
-        function skip(){ roulette(); }
-
-        function dego(){
-          const t = currentId ? state.tasks.find(x=>x.id===currentId) : null;
-          if(!t || t.eliminated) return;
-          consumeFragment(t.id);
-        }
-
-        function eliminateNow(){
-          const t = currentId ? state.tasks.find(x=>x.id===currentId) : null;
-          if(!t || t.eliminated) return;
-
-          const tor = t.torionsRemaining || 0;
-
-          t.torionsRemaining = 0;
-          t.fragRemaining = 0;
-          t.eliminated = true;
-          state.eliminatedCount = (state.eliminatedCount || 0) + 1;
-
-          logEvent({
-            kind: "task_eliminated",
-            taskId: t.id,
-            taskName: t.name,
-            taskType: t.type,
-            torions: tor,
-            minutes: 0,
-            fragments: 0
-          });
-
-          maybeReward();
-          burst(1.3);
-          showToast("Éliminé.");
-          currentId = null;
-          render();
-        }
-
-        function consumeFragment(taskId){
-          const t = state.tasks.find(x=>x.id===taskId);
-          if(!t || t.eliminated || (t.fragRemaining||0) <= 0) return;
-
-          const beforeTor = t.torionsRemaining || 0;
-
-          t.fragRemaining = Math.max(0, (t.fragRemaining||0) - 1);
-          rescaleTorionsOnFragment(t);
-
-          const afterTor = t.torionsRemaining || 0;
-          const torDelta = Math.max(0, Math.round((beforeTor - afterTor) * 10) / 10);
-
-          logEvent({
-            kind: "fragment",
-            taskId: t.id,
-            taskName: t.name,
-            taskType: t.type,
-            torions: torDelta,
-            minutes: prefs.fragMinutes,
-            fragments: 1
-          });
-
-          if(t.eliminated){
-            // Complété via fragments
-            logEvent({
-              kind: "task_eliminated",
-              taskId: t.id,
-              taskName: t.name,
-              taskType: t.type,
-              torions: 0,
-              minutes: 0,
-              fragments: 0,
-              meta: { by: "fragments" }
-            });
-
-            burst(1.0);
-            showToast("Terminé.");
-            if(currentId === t.id) currentId = null;
-          }else{
-            showToast("Fragment.");
-          }
-          render();
-        }
-
-        function resetAll(){
-          if(!confirm("Tout effacer ?")) return;
-
-          logEvent({
-            kind: "reset",
-            meta: {
-              tasks: state.tasks.length,
-              remainingTorions: remainingTorions()
-            }
-          });
-
-          state = { tasks: [], initialTorions: 0, eliminatedCount: 0 };
-          currentId = null;
-          saveState();
-          showToast("Reset.");
-          render();
-        }
-
-        /* ========= Sorting / grouping ========= */
-        function estimateRemainingTimeForTask(t){
-          if(t.eliminated) return 0;
-          const frac = t.torionsTotal > 0 ? (t.torionsRemaining / t.torionsTotal) : 0;
-          const min = Math.round((t.timeMin||0) * frac);
-          const max = Math.round((t.timeMax||0) * frac);
-          return (min + max) / 2;
-        }
-
-        function sortTasks(arr){
-          const mode = prefs.sortMode;
-          const tasks = arr.slice();
-
-          const smartScore = (t) => {
-            if(t.eliminated) return 1e9;
-            return -(t.torionsRemaining || 0) * 100 + estimateRemainingTimeForTask(t);
-          };
-
-          switch(mode){
-            case "remain_desc":
-              tasks.sort((a,b)=> (Number(a.eliminated)-Number(b.eliminated)) || ((b.torionsRemaining||0)-(a.torionsRemaining||0)));
-              break;
-            case "remain_asc":
-              tasks.sort((a,b)=> (Number(a.eliminated)-Number(b.eliminated)) || ((a.torionsRemaining||0)-(b.torionsRemaining||0)));
-              break;
-            case "time_desc":
-              tasks.sort((a,b)=> (Number(a.eliminated)-Number(b.eliminated)) || (estimateRemainingTimeForTask(b)-estimateRemainingTimeForTask(a)));
-              break;
-            case "time_asc":
-              tasks.sort((a,b)=> (Number(a.eliminated)-Number(b.eliminated)) || (estimateRemainingTimeForTask(a)-estimateRemainingTimeForTask(b)));
-              break;
-            case "name_asc":
-              tasks.sort((a,b)=> (Number(a.eliminated)-Number(b.eliminated)) || a.name.localeCompare(b.name,"fr"));
-              break;
-            case "smart":
-            default:
-              tasks.sort((a,b)=> smartScore(a)-smartScore(b) || a.name.localeCompare(b.name,"fr"));
-              break;
-          }
-          return tasks;
-        }
-
-        /* ========= Render ========= */
-        function render(){
-          fragMinutesSel.value = String(prefs.fragMinutes);
-          rewardLevelSel.value = String(prefs.rewardIdx);
-          groupModeSel.value = prefs.groupMode;
-          sortModeSel.value = prefs.sortMode;
-
-          const remT = remainingTorions();
-          torionsLeftEl.textContent = formatTorions(remT);
-
-          const remTime = remainingTime();
-          timeLeftEl.textContent = `${remTime.min}–${remTime.max} min`;
-
-          const init = Math.max(1, state.initialTorions || remT || 1);
-          const donePct = clamp(Math.round((1 - (remT / init)) * 100), 0, 100);
-          pctDoneEl.textContent = `${donePct}%`;
-          ringEl.style.setProperty("--p", `${donePct * 3.6}deg`);
-
-          const cur = currentId ? state.tasks.find(t=>t.id===currentId) : null;
-          if(cur && !cur.eliminated){
-            curName.textContent = cur.name;
-            curKey.textContent = cur.id.slice(0,6);
-
-            curMeta.innerHTML = "";
-            const bits = [
-              `type: ${cur.type || "—"}`,
-              `reste: ${formatTorions(cur.torionsRemaining)} torions`,
-              `temps: ${cur.timeMin}–${cur.timeMax} min`,
-              `fragments: ${cur.fragRemaining}`,
-            ];
-            for(const b of bits){
-              const s = document.createElement("span");
-              s.className = "chip";
-              s.textContent = b;
-              curMeta.appendChild(s);
-            }
-
-            btnSkip.disabled = false;
-            btnDego.disabled = false;
-            btnElimNow.disabled = false;
-          }else{
-            curName.textContent = "Aucune";
-            curKey.textContent = "—";
-            curMeta.innerHTML = "";
-            btnSkip.disabled = state.tasks.filter(t=>!t.eliminated).length === 0;
-            btnDego.disabled = true;
-            btnElimNow.disabled = true;
-            currentId = null;
-          }
-
-          // list
-          taskContainer.innerHTML = "";
-          const sorted = sortTasks(state.tasks);
-
-          const groupMode = prefs.groupMode;
-          if(groupMode === "none"){
-            const det = makeDetails("Tout", sorted, true);
-            det.open = true;
-            taskContainer.appendChild(det);
-          }else{
-            const groups = new Map();
-            for(const t of sorted){
-              const key =
-                groupMode === "torions"
-                  ? `Torions ${formatTorions(t.torionsTotal)}`
-                  : (t.type || "Sans type");
-              if(!groups.has(key)) groups.set(key, []);
-              groups.get(key).push(t);
-            }
-
-            const keys = Array.from(groups.keys()).sort((a,b)=> a.localeCompare(b,"fr"));
-            for(const k of keys){
-              taskContainer.appendChild(makeDetails(k, groups.get(k), false));
-            }
-          }
-
-          // daily report + history tab
-          renderDailyAndHistory();
-
-          saveState();
-          savePrefs();
-          saveHistory();
-        }
-
-        function makeDetails(title, items, forceOpen){
-          const det = document.createElement("details");
-          det.open = !!forceOpen;
-
-          const sumTor = items.reduce((a,t)=> a + (t.eliminated ? 0 : Math.max(0, t.torionsRemaining||0)), 0);
-          const done = items.filter(t=>t.eliminated).length;
-          const total = items.length;
-
-          const sum = document.createElement("summary");
-          sum.textContent = `${title} — reste ${formatTorions(sumTor)} — ${done}/${total}`;
-          det.appendChild(sum);
-
-          const box = document.createElement("div");
-          box.className = "list";
-          box.style.marginTop = "10px";
-
-          for(const t of items){
-            box.appendChild(renderTask(t));
-          }
-          det.appendChild(box);
-          return det;
-        }
-
-        function renderTask(t){
-          const wrap = document.createElement("div");
-          wrap.className = "task";
-
-          const top = document.createElement("div");
-          top.className = "taskTop";
-
-          const left = document.createElement("div");
-          const nm = document.createElement("div");
-          nm.className = "nm" + (t.eliminated ? " strike" : "");
-          nm.textContent = t.name;
-          left.appendChild(nm);
-
-          const meta = document.createElement("div");
-          meta.className = "metaRow";
-          const parts = [
-            `type: ${t.type || "—"}`,
-            `torions: ${formatTorions(t.torionsTotal)}`,
-            `reste: ${formatTorions(t.torionsRemaining)}`,
-            `temps: ${t.timeMin}–${t.timeMax}`,
-            `fragments: ${t.fragRemaining}`,
-          ];
-          for(const p of parts){
-            const s = document.createElement("span");
-            s.className = "chip";
-            s.textContent = p;
-            meta.appendChild(s);
-          }
-          left.appendChild(meta);
-
-          const right = document.createElement("div");
-          right.className = "smallBtnRow";
-
-          const bPick = document.createElement("button");
-          bPick.className = "btn";
-          bPick.textContent = "Mettre en cours";
-          bPick.disabled = t.eliminated;
-          bPick.addEventListener("click", ()=>{
-            currentId = t.id;
-            render();
-          });
-
-          const bFrag = document.createElement("button");
-          bFrag.className = "btn";
-          bFrag.textContent = "Dégommer 1";
-          bFrag.disabled = t.eliminated || (t.fragRemaining||0) <= 0;
-          bFrag.addEventListener("click", ()=> consumeFragment(t.id));
-
-          const bElim = document.createElement("button");
-          bElim.className = "btn";
-          bElim.textContent = "Éliminer";
-          bElim.disabled = t.eliminated;
-          bElim.addEventListener("click", ()=>{
-            const tor = t.torionsRemaining || 0;
-
-            t.torionsRemaining = 0;
-            t.fragRemaining = 0;
-            t.eliminated = true;
-            state.eliminatedCount = (state.eliminatedCount || 0) + 1;
-
-            logEvent({
-              kind: "task_eliminated",
-              taskId: t.id,
-              taskName: t.name,
-              taskType: t.type,
-              torions: tor,
-              minutes: 0,
-              fragments: 0
-            });
-
-            maybeReward();
-            burst(1.1);
-            if(currentId === t.id) currentId = null;
-            render();
-          });
-
-          right.appendChild(bPick);
-          right.appendChild(bFrag);
-          right.appendChild(bElim);
-
-          top.appendChild(left);
-          top.appendChild(right);
-          wrap.appendChild(top);
-
-          if(!t.eliminated && (t.fragRemaining||0) > 0){
-            const fragIdx = t.fragRemaining;
-            const lab = fragLabel(t, fragIdx);
-
-            const line = document.createElement("div");
-            line.className = "metaRow";
-            const a = document.createElement("span");
-            a.className = "chip";
-            a.textContent = `fragment: ${fragIdx} — ${lab}`;
-            const b = document.createElement("span");
-            b.className = "chip";
-            b.textContent = `durée: ${prefs.fragMinutes} min`;
-            line.appendChild(a);
-            line.appendChild(b);
-
-            const note = document.createElement("textarea");
-            note.className = "noteArea";
-            note.placeholder = "";
-            note.value = t.fragNotes && t.fragNotes[String(fragIdx)] ? t.fragNotes[String(fragIdx)] : "";
-            note.addEventListener("change", ()=>{
-              const task = state.tasks.find(x=>x.id===t.id);
-              if(!task) return;
-              task.fragNotes = task.fragNotes || {};
-              task.fragNotes[String(fragIdx)] = note.value.slice(0, 6000);
-              saveState();
-              showToast("OK");
-            });
-
-            const attach = document.createElement("div");
-            attach.className = "attachRow";
-
-            const file = document.createElement("input");
-            file.type = "file";
-            file.accept = "image/*";
-            file.addEventListener("change", async ()=>{
-              if(!file.files || !file.files[0]) return;
-              const img64 = await fileToDataURL(file.files[0], 900);
-              const task = state.tasks.find(x=>x.id===t.id);
-              task.fragPhotos = task.fragPhotos || {};
-              const key = String(fragIdx);
-              task.fragPhotos[key] = task.fragPhotos[key] || [];
-              task.fragPhotos[key].push(img64);
-              task.fragPhotos[key] = task.fragPhotos[key].slice(-4);
-              saveState();
-              file.value = "";
-              showToast("OK");
-              render();
-            });
-
-            const thumbs = document.createElement("div");
-            thumbs.className = "thumbs";
-            const photos = (t.fragPhotos && t.fragPhotos[String(fragIdx)]) ? t.fragPhotos[String(fragIdx)] : [];
-            for(let i=0;i<photos.length;i++){
-              const th = document.createElement("div");
-              th.className = "thumb";
-              const im = document.createElement("img");
-              im.src = photos[i];
-              im.alt = "photo";
-              im.addEventListener("click", ()=>{
-                const task = state.tasks.find(x=>x.id===t.id);
-                const key = String(fragIdx);
-                task.fragPhotos[key].splice(i,1);
-                saveState();
-                render();
-              });
-              th.appendChild(im);
-              thumbs.appendChild(th);
-            }
-
-            attach.appendChild(file);
-
-            wrap.appendChild(line);
-            wrap.appendChild(note);
-            wrap.appendChild(attach);
-            if(photos.length) wrap.appendChild(thumbs);
-          }
-
-          return wrap;
-        }
-
-        /* ========= Export / Import JSON (state) ========= */
-        function exportJson(){
-          const payload = {
-            version: 2,
-            exportedAt: new Date().toISOString(),
-            state,
-            prefs,
-          };
-          const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "eliminator_backup.json";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-          showToast("Export.");
-        }
-
-        async function importJson(){
-          const file = await pickJsonFile();
-          if(!file) return;
-          const txt = await file.text();
-          try{
-            const data = JSON.parse(txt);
-            if(data && data.state && Array.isArray(data.state.tasks)){
-              state = data.state;
-              if(data.prefs) prefs = { ...prefs, ...data.prefs };
-              currentId = null;
-              saveState();
-              savePrefs();
-              showToast("Import.");
-              render();
-            }else{
-              showToast("JSON?");
-            }
-          }catch{
-            showToast("JSON?");
-          }
-        }
-
-        function pickJsonFile(){
-          return new Promise((resolve)=>{
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = "application/json";
-            input.onchange = ()=> resolve(input.files && input.files[0] ? input.files[0] : null);
-            input.click();
-          });
-        }
-
-        /* ========= Details expand/collapse ========= */
-        function setAllDetails(open){
-          const d = Array.from(taskContainer.querySelectorAll("details"));
-          d.forEach(x=> x.open = open);
-        }
-
-        /* ========= Drawer: tabs + swipe + drag ========= */
-        function setTab(idx){
-          const maxIdx = pages.children.length - 1;
-          const i = clamp(idx,0,maxIdx);
-          pages.scrollTo({ left: pages.clientWidth * i, behavior: "smooth" });
-          tabs.forEach((t,k)=>{
-            const on = k === i;
-            t.classList.toggle("active", on);
-            t.setAttribute("aria-selected", on ? "true" : "false");
-          });
-        }
-
-        tabs.forEach((t)=>{
-          t.addEventListener("click", ()=>{
-            setTab(Number(t.dataset.tab||0));
-          });
-        });
-
-        pages.addEventListener("scroll", ()=>{
-          const i = Math.round(pages.scrollLeft / Math.max(1, pages.clientWidth));
-          tabs.forEach((t,k)=>{
-            const on = k === i;
-            t.classList.toggle("active", on);
-            t.setAttribute("aria-selected", on ? "true" : "false");
-          });
-        }, { passive:true });
-
-        const SNAPS = [0.0, 0.45, 0.62, 0.88];
-        function setDrawerSnap(snap){
-          prefs.drawerSnap = clamp(snap, 0, 0.88);
-          drawerSheet.style.setProperty("--drawerY", `${Math.round(prefs.drawerSnap*100)}%`);
-          btnDrawer.setAttribute("aria-expanded", prefs.drawerSnap < 0.86 ? "true" : "false");
-          savePrefs();
-        }
-
-        function toggleDrawer(){
-          setDrawerSnap(prefs.drawerSnap >= 0.80 ? 0.45 : 0.88);
-        }
-
-        btnDrawer.addEventListener("click", toggleDrawer);
-        btnHideDrawer.addEventListener("click", ()=> setDrawerSnap(0.88));
-
-        let dragging=false;
-        let startY=0;
-        let startSnap=0;
-
-        function onDown(e){
-          dragging=true;
-          drawer.classList.add("dragging");
-          startY = (e.touches ? e.touches[0].clientY : e.clientY);
-          startSnap = prefs.drawerSnap;
-          if(typeof e.pointerId === "number"){
-            drawerHandle.setPointerCapture?.(e.pointerId);
-          }
-        }
-        function onMove(e){
-          if(!dragging) return;
-          const y = (e.touches ? e.touches[0].clientY : e.clientY);
-          const dy = y - startY;
-
-          const h = Math.min(820, window.innerHeight * 0.86);
-          const delta = dy / Math.max(280, h);
-          const next = clamp(startSnap + delta, 0, 0.88);
-          drawerSheet.style.setProperty("--drawerY", `${Math.round(next*100)}%`);
-        }
-        function onUp(){
-          if(!dragging) return;
-          dragging=false;
-          drawer.classList.remove("dragging");
-
-          const varY = drawerSheet.style.getPropertyValue("--drawerY");
-          const yPct = varY ? Number(varY.replace("%",""))/100 : prefs.drawerSnap;
-
-          let best = SNAPS[0], bestD = 1e9;
-          for(const s of SNAPS){
-            const d = Math.abs(s - yPct);
-            if(d < bestD){ bestD = d; best = s; }
-          }
-          setDrawerSnap(best);
-        }
-
-        drawerHandle.addEventListener("pointerdown", onDown);
-        window.addEventListener("pointermove", onMove, { passive:true });
-        window.addEventListener("pointerup", onUp, { passive:true });
-
-        setDrawerSnap(prefs.drawerSnap);
-
-        /* ========= Daily + History rendering ========= */
-        function renderDailyAndHistory(){
-          const map = aggregateByDay();
-          const today = dayKey(new Date());
-          const t = map.get(today) || { day: today, fragments:0, tasksCompleted:0, torionsEliminated:0, minutesFocused:0, imports:0, resets:0, events:0 };
-
-          // Chips "rapport du jour"
-          dailyChips.innerHTML = "";
-          const chips = [
-            `fragments: ${t.fragments || 0}`,
-            `tâches: ${t.tasksCompleted || 0}`,
-            `focus: ${Math.round(t.minutesFocused || 0)} min`,
-            `torions: ${formatTorions(t.torionsEliminated || 0)}`,
-          ];
-          for(const c of chips){
-            const s = document.createElement("span");
-            s.className = "chip";
-            s.textContent = c;
-            dailyChips.appendChild(s);
-          }
-
-          dailyReport.value = buildDailyReport(t, today);
-
-          // History tab: today title + streak + chips
-          histTodayTitle.textContent = `Aujourd’hui — ${fmtDayHuman(today)}`;
-          histStreak.textContent = `streak: ${streakFromMap(map)}`;
-
-          histTodayChips.innerHTML = "";
-          const hc = [
-            `fragments: ${t.fragments || 0}`,
-            `tâches: ${t.tasksCompleted || 0}`,
-            `focus: ${Math.round(t.minutesFocused || 0)} min`,
-            `torions: ${formatTorions(t.torionsEliminated || 0)}`,
-            `imports: ${t.imports || 0}`,
-          ];
-          for(const c of hc){
-            const s = document.createElement("span");
-            s.className = "chip";
-            s.textContent = c;
-            histTodayChips.appendChild(s);
-          }
-
-          // last 7 days list
-          const days = [];
-          for(let i=0;i<7;i++){
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const k = dayKey(d);
-            const x = map.get(k) || { day:k, fragments:0, tasksCompleted:0, torionsEliminated:0, minutesFocused:0, imports:0, resets:0, events:0 };
-            days.push(x);
-          }
-
-          const sum7 = days.reduce((acc,x)=>{
-            acc.fragments += x.fragments||0;
-            acc.tasksCompleted += x.tasksCompleted||0;
-            acc.minutesFocused += x.minutesFocused||0;
-            acc.torionsEliminated += x.torionsEliminated||0;
-            return acc;
-          }, { fragments:0, tasksCompleted:0, minutesFocused:0, torionsEliminated:0 });
-
-          hist7Summary.textContent = `fragments ${sum7.fragments} · tâches ${sum7.tasksCompleted} · focus ${Math.round(sum7.minutesFocused)} min`;
-
-          hist7List.innerHTML = "";
-          const maxFocus = Math.max(1, ...days.map(x => Math.round(x.minutesFocused||0)));
-
-          for(const x of days){
-            const row = document.createElement("div");
-            row.className = "hRow";
-
-            const top = document.createElement("div");
-            top.className = "hTop";
-
-            const dlabel = document.createElement("div");
-            dlabel.className = "hDate";
-            dlabel.textContent = `${fmtDayHuman(x.day)} (${x.day})`;
-
-            const small = document.createElement("div");
-            small.className = "hSmall";
-            small.textContent = `focus ${Math.round(x.minutesFocused||0)} min · frags ${x.fragments||0} · tâches ${x.tasksCompleted||0}`;
-
-            top.appendChild(dlabel);
-            top.appendChild(small);
-
-            const bar = document.createElement("div");
-            bar.className = "bar";
-            const fill = document.createElement("div");
-            const pct = clamp(Math.round(((Math.round(x.minutesFocused||0)) / maxFocus) * 100), 0, 100);
-            fill.style.width = `${pct}%`;
-            bar.appendChild(fill);
-
-            row.appendChild(top);
-            row.appendChild(bar);
-
-            hist7List.appendChild(row);
-          }
-        }
-
-        /* ========= Events ========= */
-        btnImport.addEventListener("click", doImport);
-        btnDemo.addEventListener("click", loadDemo);
-
-        btnRoulette.addEventListener("click", roulette);
-        btnSkip.addEventListener("click", skip);
-        btnDego.addEventListener("click", dego);
-        btnElimNow.addEventListener("click", eliminateNow);
-        btnReset.addEventListener("click", resetAll);
-
-        fragMinutesSel.addEventListener("change", ()=>{
-          prefs.fragMinutes = Number(fragMinutesSel.value) === 5 ? 5 : 10;
-          savePrefs();
-          render();
-        });
-
-        rewardLevelSel.addEventListener("change", ()=>{
-          prefs.rewardIdx = clamp(parseInt(rewardLevelSel.value,10) || 0, 0, 3);
-          savePrefs();
-          render();
-        });
-
-        groupModeSel.addEventListener("change", ()=>{
-          prefs.groupMode = groupModeSel.value;
-          savePrefs();
-          render();
-        });
-
-        sortModeSel.addEventListener("change", ()=>{
-          prefs.sortMode = sortModeSel.value;
-          savePrefs();
-          render();
-        });
-
-        btnExpandAll.addEventListener("click", ()=> setAllDetails(true));
-        btnCollapseAll.addEventListener("click", ()=> setAllDetails(false));
-
-        btnExport.addEventListener("click", exportJson);
-        btnImportJson.addEventListener("click", importJson);
-
-        btnCopyDaily.addEventListener("click", ()=> copyToClipboard(dailyReport.value));
-        btnExportHistory.addEventListener("click", exportHistoryJson);
-        btnClearHistory.addEventListener("click", clearHistory);
-
-        btnCopyWeekly.addEventListener("click", ()=>{
-          const map = aggregateByDay();
-          const lines = [];
-          lines.push("Synthèse — 7 derniers jours");
-          lines.push("");
-          for(let i=0;i<7;i++){
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const k = dayKey(d);
-            const x = map.get(k) || { fragments:0, tasksCompleted:0, minutesFocused:0, torionsEliminated:0 };
-            lines.push(`- ${k} : focus ${Math.round(x.minutesFocused||0)} min · frags ${x.fragments||0} · tâches ${x.tasksCompleted||0} · torions ${formatTorions(x.torionsEliminated||0)}`);
-          }
-          copyToClipboard(lines.join("\n"));
-        });
-
-        window.addEventListener("keydown", (e)=>{
-          const t = e.target;
-          if(t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT" || t.tagName === "SELECT")) return;
-
-          const k = e.key.toLowerCase();
-          if(k === "r") roulette();
-          if(k === "l") skip();
-          if(k === "a") dego();
-        });
-
-        /* ========= First render ========= */
-        pruneHistory();
-        render();
-      })();
-    </script>
-  </body>
+        pushHistory();
+        state = { ...obj, history: state.history };
+        save();
+        renderAll();
+        showToast("Import.");
+      }catch{
+        showToast("JSON?");
+      }
+    };
+    input.click();
+  }
+
+  function resetAll(){
+    if(!confirm("Reset ?")) return;
+    state = makeInitial();
+    save();
+    renderAll();
+    showToast("OK");
+  }
+
+  // ---------- UI wiring ----------
+  function renderAll(){
+    // panel
+    document.body.classList.toggle("panelOpen", !!state.ui.panelOpen);
+    selTorionMinutes.value = String(state.torionMinutes || 5);
+    selEnergyFilter.value = state.ui.energyFilter || "tous";
+    selTunnel.value = state.focus.tunnel ? "on" : "off";
+    updatePresetLabel();
+    renderMode();
+    renderLists();
+    renderFocus();
+    updateUndoRedoBtns();
+  }
+
+  // Tabs
+  tabCapture.addEventListener("click", ()=> setMode("capture"));
+  tabTriage.addEventListener("click", ()=> setMode("triage"));
+  tabFocus.addEventListener("click", ()=>{
+    if(!state.focus.taskId){
+      // si aucun focus, on choisit la première tâche triée, sinon la première inbox
+      const cand = filteredTasks("triage")[0] || filteredTasks("inbox")[0];
+      if(cand) startFocus(cand.id);
+      else { showToast("Vide."); return; }
+    }else{
+      state.ui.mode = "focus";
+      save();
+      renderMode();
+      renderFocus();
+    }
+  });
+
+  // Panel toggle
+  btnPanel.addEventListener("click", togglePanel);
+
+  // Inbox add
+  btnAdd.addEventListener("click", addFromInbox);
+  btnToTriage.addEventListener("click", ()=> setMode("triage"));
+
+  // Panel controls
+  selTorionMinutes.addEventListener("change", ()=>{
+    pushHistory();
+    state.torionMinutes = (Number(selTorionMinutes.value) === 10) ? 10 : 5;
+    save();
+    showToast("OK");
+  });
+  selEnergyFilter.addEventListener("change", ()=>{
+    state.ui.energyFilter = selEnergyFilter.value;
+    save();
+    renderLists();
+  });
+  selTunnel.addEventListener("change", ()=>{
+    state.focus.tunnel = (selTunnel.value === "on");
+    save();
+    showToast("OK");
+  });
+
+  btnUndo.addEventListener("click", undo);
+  btnRedo.addEventListener("click", redo);
+
+  btnExport.addEventListener("click", exportJson);
+  btnImport.addEventListener("click", importJson);
+  btnResetAll.addEventListener("click", resetAll);
+
+  btnPresetPrev.addEventListener("click", presetPrev);
+  btnPresetNext.addEventListener("click", presetNext);
+  btnPresetAdd.addEventListener("click", presetAdd);
+  btnPresetEdit.addEventListener("click", presetEdit);
+  btnPresetDel.addEventListener("click", presetDel);
+
+  btnPanic.addEventListener("click", panic);
+  btnRitual.addEventListener("click", ritual10s);
+
+  // Focus buttons
+  btnDego.addEventListener("click", ()=>{
+    degoOneTorion();
+    renderFocus();
+  });
+
+  btnTimer.addEventListener("click", ()=>{
+    if(!currentTask()) return;
+    if(state.focus.running) pauseTimer();
+    else startTimer();
+  });
+
+  btnFinish.addEventListener("click", ()=>{
+    const t = currentTask();
+    if(!t) return;
+    markDone(t.id);
+    renderFocus();
+    showToast("OK");
+  });
+
+  btnExitFocus.addEventListener("click", exitFocus);
+
+  // Keyboard shortcuts
+  window.addEventListener("keydown", (e)=>{
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    const inField = (tag === "textarea" || tag === "input" || tag === "select");
+
+    // Ctrl/⌘+Enter => add inbox
+    if(inField && tag === "textarea" && (e.ctrlKey || e.metaKey) && e.key === "Enter"){
+      e.preventDefault();
+      addFromInbox();
+      return;
+    }
+
+    // Undo/Redo
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey){
+      e.preventDefault(); undo(); return;
+    }
+    if((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "z") && e.shiftKey){
+      e.preventDefault(); redo(); return;
+    }
+
+    // Presets
+    if(e.altKey && e.key === "ArrowLeft"){ e.preventDefault(); presetPrev(); return; }
+    if(e.altKey && e.key === "ArrowRight"){ e.preventDefault(); presetNext(); return; }
+
+    if(inField) return;
+
+    // Focus
+    if(e.key.toLowerCase() === "f"){
+      e.preventDefault();
+      tabFocus.click();
+      return;
+    }
+    if(e.key === "Escape" && state.ui.mode === "focus"){
+      e.preventDefault();
+      exitFocus();
+      return;
+    }
+  });
+
+  // Swipe to switch presets (simple, sur header)
+  let sx = null;
+  let st = null;
+  const headerEl = document.querySelector("header");
+  headerEl.addEventListener("pointerdown", (e)=>{
+    sx = e.clientX;
+    st = Date.now();
+  });
+  headerEl.addEventListener("pointerup", (e)=>{
+    if(sx === null) return;
+    const dx = e.clientX - sx;
+    const dt = Date.now() - st;
+    sx = null; st = null;
+    if(dt > 500) return;
+    if(Math.abs(dx) < 60) return;
+    if(dx < 0) presetNext();
+    else presetPrev();
+  });
+
+  // Drag & drop zones
+  setupDropZones();
+
+  // ---------- Focus initial ----------
+  function stopIfNoTask(){
+    if(state.ui.mode === "focus" && !currentTask()){
+      exitFocus();
+    }
+  }
+
+  // ---------- Utils ----------
+  function escapeHtml(s){
+    return String(s ?? "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+  function escapeAttr(s){
+    return escapeHtml(s).replace(/"/g, "&quot;");
+  }
+  function optionHtml(current, options){
+    return options.map(v => {
+      const sel = String(v) === String(current) ? "selected" : "";
+      return `<option value="${escapeAttr(v)}" ${sel}>${escapeHtml(v)}</option>`;
+    }).join("");
+  }
+
+  // ---------- Start ----------
+  // sanity defaults
+  state.torionMinutes = (state.torionMinutes === 10) ? 10 : 5;
+  document.body.classList.toggle("panelOpen", !!state.ui.panelOpen);
+  renderAll();
+  stopIfNoTask();
+})();
+</script>
+</body>
 </html>
