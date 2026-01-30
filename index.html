@@ -1,0 +1,237 @@
+/* ========= Parsing (robuste) ========= */
+function stripDecor(s){
+  return (s || "")
+    .replace(/^[#>\-\*\u2022\s]+/g,"")
+    .replace(/[:：\-\u2013\u2014\s]+$/g,"")
+    .replace(/\s{2,}/g," ")
+    .trim();
+}
+
+function isHeaderLine(line){
+  const s = (line || "").trim();
+  if(!s) return false;
+
+  // Headers typiques
+  if(/[:：]\s*$/.test(s)) return true;                 // "APPELS:"
+  if(/^#{1,6}\s+/.test(s)) return true;               // "# APPELS"
+  if(/^\*\*.+\*\*$/.test(s)) return true;             // "**APPELS**"
+
+  // Evite de prendre une tâche pour un header si ça ressemble à une ligne de tâche
+  const looksLikeTaskPrefix = /^(\s*([-*•]|—|–)\s+|\s*\d+[.)]\s+|\s*[-*•]?\s*\[\s*[xX ]\s*\]\s+)/.test(s);
+  if(looksLikeTaskPrefix) return false;
+
+  // All caps court (souvent des catégories), sans chiffres
+  const lettersOnly = s.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g,"");
+  const upperRatio = lettersOnly ? (lettersOnly.replace(/[^A-ZÀ-ÖØ-Ý]/g,"").length / lettersOnly.length) : 0;
+  if(s.length <= 44 && upperRatio > 0.8 && !/\d/.test(s)) return true;
+
+  return false;
+}
+
+function parseTimeToMinutes(txt){
+  // gère "1h", "1 h 30", "1h30", "90 min"
+  const s = txt.toLowerCase();
+
+  const hm = s.match(/(\d+(?:[.,]\d+)?)\s*h(?:eures?)?\s*(\d{1,2})?\s*(?:min|m)?\b/);
+  if(hm){
+    const h = Number(String(hm[1]).replace(",","."));
+    const m = hm[2] ? Number(hm[2]) : 0;
+    return Math.round(h*60 + m);
+  }
+
+  const mOnly = s.match(/(\d+)\s*(?:min|minutes|m)\b/);
+  if(mOnly) return Number(mOnly[1]);
+
+  return null;
+}
+
+function extractTime(line){
+  // range "10-20 min", "10 à 20 min"
+  const range = line.match(/(\d+(?:[.,]\d+)?)\s*(?:à|a|to|[-–—])\s*(\d+(?:[.,]\d+)?)\s*(?:min|minutes|m)\b/i);
+  if(range){
+    const a = Number(String(range[1]).replace(",","."));
+    const b = Number(String(range[2]).replace(",","."));
+    return { min: Math.round(a), max: Math.round(b), raw: range[0] };
+  }
+
+  // hours like "1h30" or "1 h 30"
+  const hLike = line.match(/(\d+(?:[.,]\d+)?)\s*h(?:eures?)?\s*(\d{1,2})?\s*(?:min|m)?\b/i);
+  if(hLike){
+    const mins = parseTimeToMinutes(hLike[0]);
+    return { min: mins, max: mins, raw: hLike[0] };
+  }
+
+  // single minutes
+  const single = line.match(/(\d+(?:[.,]\d+)?)\s*(?:min|minutes|m)\b/i);
+  if(single){
+    const v = Number(String(single[1]).replace(",","."));
+    return { min: Math.round(v), max: Math.round(v), raw: single[0] };
+  }
+
+  return null;
+}
+
+function extractTorions(line){
+  // formats: "3 torions", "3t", "(3)", "[3]", "x3", "... - 3"
+  const patterns = [
+    /(\d+(?:[.,]\d+)?)\s*(?:t(?:orions?)?|torions?|otorions?|ethorions?|points?|pts)\b/i,
+    /[\(\[]\s*(\d+(?:[.,]\d+)?)\s*(?:t(?:orions?)?|torions?|points?|pts)?\s*[\)\]]/i,
+    /\bx\s*(\d+(?:[.,]\d+)?)\b/i,
+  ];
+
+  for(const re of patterns){
+    const m = line.match(re);
+    if(m){
+      const v = Number(String(m[1]).replace(",","."));
+      if(Number.isFinite(v) && v > 0) return { value: v, raw: m[0] };
+    }
+  }
+
+  // trailing number: "... – 3" ou "... 3"
+  // (mais évite de prendre "15 min" qu'on a déjà)
+  const trailing = line.match(/(?:^|[\s–—-])(\d+(?:[.,]\d+)?)\s*$/);
+  if(trailing){
+    const v = Number(String(trailing[1]).replace(",","."));
+    if(Number.isFinite(v) && v > 0) return { value: v, raw: trailing[0] };
+  }
+
+  return null;
+}
+
+function timeFromTorions(torions){
+  const rounded = Math.round(torions);
+  if(TORION_TO_TIME[rounded]) return { ...TORION_TO_TIME[rounded] };
+
+  // fallback simple: 1 torion = 5 min
+  const mins = Math.max(5, Math.round(torions * 5));
+  return { min: mins, max: mins };
+}
+
+function cleanLinePrefix(line){
+  let s = line;
+
+  // strikethrough marker
+  s = s.replace(/~~/g,"");
+
+  // checkbox markdown
+  s = s.replace(/^\s*[-*•]?\s*\[\s*[xX ]\s*\]\s*/,"");
+
+  // emoji check
+  s = s.replace(/^\s*[✅✔☑]+\s*/,"");
+
+  // bullets / dashes
+  s = s.replace(/^\s*(?:[-*•]|—|–)\s+/,"");
+
+  // numbered lists: "1." / "1)"
+  s = s.replace(/^\s*\d+[.)]\s+/,"");
+
+  return s.trim();
+}
+
+function detectEliminated(originalLine){
+  const s = originalLine || "";
+  if(s.includes("~~")) return true;
+  if(/^\s*[-*•]?\s*\[\s*[xX]\s*\]\s*/.test(s)) return true;
+  if(/^\s*[✅✔☑]/.test(s)) return true;
+  return false;
+}
+
+function parsePastedText(raw){
+  const txt = (raw || "").replace(/\u00A0/g," ").trim();
+  if(!txt) return [];
+
+  // Bonus: si l’utilisateur colle du JSON, on tente
+  if(/^\s*[\[{]/.test(txt)){
+    try{
+      const data = JSON.parse(txt);
+      const arr = Array.isArray(data) ? data : (data && Array.isArray(data.tasks) ? data.tasks : null);
+      if(arr){
+        return arr
+          .map((x)=>{
+            if(typeof x === "string"){
+              return makeTask({ name: x.trim(), type: "Sans type", torionsTotal: 1, timeMin: 5, timeMax: 5, eliminated:false });
+            }
+            if(x && typeof x === "object"){
+              const name = String(x.name || x.title || "Tâche").trim();
+              const type = String(x.type || x.cat || x.category || "Sans type").trim();
+              const tor = Number(x.torionsTotal ?? x.torions ?? x.points ?? 1);
+              const elim = !!(x.eliminated || x.done);
+              const tmin = Number(x.timeMin ?? 5);
+              const tmax = Number(x.timeMax ?? tmin);
+              const safeTor = (Number.isFinite(tor) && tor > 0) ? tor : 1;
+              const safeMin = (Number.isFinite(tmin) && tmin > 0) ? tmin : 5;
+              const safeMax = (Number.isFinite(tmax) && tmax > 0) ? tmax : safeMin;
+              return makeTask({ name, type, torionsTotal: safeTor, timeMin: safeMin, timeMax: safeMax, eliminated: elim });
+            }
+            return null;
+          })
+          .filter(Boolean);
+      }
+    }catch{
+      // on retombe en texte brut
+    }
+  }
+
+  const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+  const tasks = [];
+  let currentType = "Sans type";
+
+  for(const original of lines){
+    if(isHeaderLine(original)){
+      currentType = stripDecor(original);
+      if(!currentType) currentType = "Sans type";
+      continue;
+    }
+
+    const eliminated = detectEliminated(original);
+    let line = cleanLinePrefix(original);
+    if(!line) continue;
+
+    // extrait temps / torions (dans n'importe quel ordre)
+    const timeInfo = extractTime(line);
+    if(timeInfo) line = line.replace(timeInfo.raw, " ");
+
+    const torInfo = extractTorions(line);
+    if(torInfo) line = line.replace(torInfo.raw, " ");
+
+    // Nettoyage des séparateurs restants
+    let name = stripDecor(line.replace(/\s*[–—-]\s*/g," ").replace(/\s{2,}/g," "));
+    if(!name) name = "Tâche";
+
+    // Torions par défaut / dérivation depuis temps
+    let torionsTotal = torInfo ? torInfo.value : null;
+
+    let timeMin, timeMax;
+
+    if(timeInfo){
+      timeMin = timeInfo.min;
+      timeMax = timeInfo.max;
+      if(!torionsTotal){
+        const avg = (timeMin + timeMax) / 2;
+        torionsTotal = Math.max(1, Math.round(avg / 5));
+      }
+    }
+
+    if(!torionsTotal){
+      torionsTotal = 1; // ultra permissif: aucune info → 1 torion
+    }
+
+    if(timeMin == null || timeMax == null){
+      const est = timeFromTorions(torionsTotal);
+      timeMin = est.min;
+      timeMax = est.max;
+    }
+
+    tasks.push(makeTask({
+      name,
+      type: currentType,
+      torionsTotal,
+      timeMin,
+      timeMax,
+      eliminated
+    }));
+  }
+
+  return tasks;
+}
